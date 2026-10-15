@@ -18,21 +18,28 @@
             margin: 0;
             padding: 0;
         }
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
         body {
             font-family: var(--font-sans);
             background-color: #050a08;
             background-image: radial-gradient(ellipse at top, rgba(6, 78, 59, 0.45), #020617 65%, #000000 100%);
             color: #f8fafc;
-            overflow-x: hidden;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
             touch-action: manipulation;
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 0.375rem;
+            padding: 0.25rem;
+            gap: 0.25rem;
         }
         .font-orbitron {
             font-family: var(--font-sci-fi);
@@ -328,9 +335,83 @@
         .transition-all { transition: all 0.25s ease; }
         .transition-opacity { transition: opacity 0.3s ease; }
 
-        /* Responsive Breakpoints */
+        #alienRosterGrid {
+            display: flex;
+            overflow-x: auto;
+            gap: 0.35rem;
+            padding-bottom: 0.15rem;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        #alienRosterGrid::-webkit-scrollbar {
+            display: none;
+        }
+        #alienRosterGrid .alien-card {
+            flex: 0 0 108px;
+            scroll-snap-align: start;
+        }
+        #overlayModal {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .touch-control-btn {
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 46px;
+        }
+
+        /* Mobile Portrait & Small Screen Optimizations */
+        @media (max-width: 639px) {
+            #hudHeader {
+                padding: 0.3rem 0.45rem;
+                margin-bottom: 0;
+                border-radius: 0.75rem;
+            }
+            .mobile-hide-label {
+                display: none;
+            }
+            #alienRosterGrid .alien-card {
+                flex: 0 0 96px;
+                padding: 0.25rem 0.35rem;
+            }
+        }
+
+        /* Mobile Landscape Mode Optimizations (Short Viewport Height) */
+        @media (max-height: 520px) {
+            body {
+                padding: 0.15rem 0.35rem;
+                gap: 0.15rem;
+            }
+            #hudHeader {
+                padding: 0.2rem 0.45rem;
+                margin-bottom: 0;
+            }
+            #rosterSection {
+                padding-top: 0.1rem;
+                padding-bottom: 0;
+            }
+            .touch-control-btn {
+                min-height: 36px;
+                padding-top: 0.2rem !important;
+                padding-bottom: 0.2rem !important;
+            }
+        }
+
+        /* Responsive Breakpoints (Tablet & Desktop) */
         @media (min-width: 640px) {
-            body { padding: 0.625rem; }
+            body { padding: 0.5rem; gap: 0.375rem; }
+            #alienRosterGrid {
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                overflow-x: visible;
+            }
+            #alienRosterGrid .alien-card {
+                flex: initial;
+            }
+            #mobileDeckToggleBtn {
+                display: none !important;
+            }
             .sm\:p-3 { padding: 0.75rem; }
             .sm\:p-4 { padding: 1rem; }
             .sm\:p-5 { padding: 1.25rem; }
@@ -357,6 +438,9 @@
             .sm\:text-2xl { font-size: 1.5rem; }
         }
         @media (min-width: 768px) {
+            #alienRosterGrid {
+                grid-template-columns: repeat(10, minmax(0, 1fr));
+            }
             .md\:h-\[400px\] { height: 400px; }
             .md\:inline { display: inline !important; }
             .md\:grid-cols-10 { grid-template-columns: repeat(10, minmax(0, 1fr)); }
@@ -365,22 +449,21 @@
 </head>
 <body>
 
-    <!-- Top Header: Telemetry HUD, Level & Arena Tracker, Omnitrix Alien Roster & Music Deck -->
-    <header class="w-full max-w-5xl omnitrix-panel rounded-2xl p-2 sm:p-3 mb-1.5 transition-all" id="hudHeader">
-        <!-- Row 1: Character Telemetry, Level & Arena Gauge, Score -->
-        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-emerald-500/20">
+    <!-- Top Header: Clean Telemetry HUD & Swipeable Omnitrix Alien Roster -->
+    <header class="w-full max-w-5xl omnitrix-panel rounded-2xl p-2 sm:p-2.5 shrink-0 transition-all" id="hudHeader">
+        <!-- Row 1: Character Form, Level Progress Bar, Score & One-Tap Sound Toggle -->
+        <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 pb-1.5 border-b border-emerald-500/20">
             
-            <!-- Brand & Form Badge -->
-            <div class="flex items-center gap-2.5">
-                <button id="cycleAlienBtn" title="Cycle Unlocked Omnitrix Aliens [Q]" class="relative w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-black/80 border border-emerald-500/60 omnitrix-glow-icon shrink-0 cursor-pointer transition">
-                    <!-- Ultimatrix X-Spikes (Visible when Ultimate) -->
-                    <svg id="ultimatrixSpikes" class="w-12 h-12 absolute inset-0 opacity-0 transition-opacity" viewBox="0 0 100 100">
+            <!-- Brand & Active Alien Form -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button id="cycleAlienBtn" title="Cycle Unlocked Omnitrix Aliens [Q]" class="relative w-8 h-8 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-black/80 border border-emerald-500/60 omnitrix-glow-icon shrink-0 cursor-pointer transition">
+                    <svg id="ultimatrixSpikes" class="w-11 h-11 absolute inset-0 opacity-0 transition-opacity" viewBox="0 0 100 100">
                         <polygon points="8,8 33,25 25,33" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
                         <polygon points="92,8 67,25 75,33" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
                         <polygon points="8,92 33,75 25,67" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
                         <polygon points="92,92 67,75 75,67" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
                     </svg>
-                    <svg class="w-8 h-8 relative z-10" viewBox="0 0 100 100">
+                    <svg class="w-7 h-7 relative z-10" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="44" fill="#111827" stroke="#94a3b8" stroke-width="6"/>
                         <circle cx="50" cy="50" r="36" fill="#22c55e"/>
                         <path d="M 14,22 L 42,50 L 14,78 Z" fill="#090d16"/>
@@ -390,94 +473,80 @@
                 </button>
 
                 <div>
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-[10px] font-orbitron font-black tracking-wider uppercase px-2 py-0.5 rounded bg-lime-400/20 text-lime-300 border border-lime-400/60" id="levelBadgeTag">
+                    <div class="flex items-center gap-1 flex-wrap">
+                        <span class="text-[9px] font-orbitron font-black tracking-wider uppercase px-1.5 py-0.5 rounded bg-lime-400/20 text-lime-300 border border-lime-400/60" id="levelBadgeTag">
                             LVL 1
                         </span>
-                        <span class="text-[10px] font-orbitron tracking-wider uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50" id="arenaBadgeTag">
-                            ARENA: BELLWOOD
+                        <span class="text-[9px] font-orbitron tracking-wider uppercase px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50" id="arenaBadgeTag">
+                            BELLWOOD
                         </span>
-                        <span class="text-[10px] font-orbitron tracking-widest uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" id="dnaStatusTag">
-                            KINECELERAN DNA
-                        </span>
-                        <span id="passiveTraitTag" class="text-[10px] font-orbitron tracking-wider uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-400/40">
-                            3X JUMP + SPEED
-                        </span>
-                        <span id="shieldBadge" class="hidden text-[10px] font-orbitron tracking-wider uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 animate-pulse">
-                            SMOOTHY SHIELD
+                        <span id="shieldBadge" class="hidden text-[9px] font-orbitron tracking-wider uppercase px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 animate-pulse">
+                            SHIELD
                         </span>
                     </div>
-                    <h1 id="formTitle" class="font-orbitron font-black text-sm sm:text-lg tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
+                    <h1 id="formTitle" class="font-orbitron font-black text-xs sm:text-base tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">
                         XLR8
                     </h1>
                 </div>
             </div>
 
-            <!-- Level Progress & Ultimatrix Gauge + Special Ability Energy Bar -->
-            <div class="flex-1 min-w-[180px] max-w-xs mx-auto sm:mx-2">
-                <div class="flex justify-between items-center text-[10px] font-orbitron mb-0.5">
-                    <span id="gaugeLabel" class="text-emerald-400 font-bold tracking-wider">LEVEL 1 PROGRESS</span>
-                    <span id="gaugeValueText" class="text-slate-300 font-bold">0% (NEXT: JETRAY)</span>
+            <!-- Compact Level Progress & Special Charges -->
+            <div class="flex-1 min-w-[125px] max-w-xs mx-auto sm:mx-2">
+                <div class="flex justify-between items-center text-[9px] font-orbitron mb-0.5">
+                    <span id="gaugeLabel" class="text-emerald-400 font-bold tracking-wider truncate">LVL 1 PROGRESS</span>
+                    <span id="gaugeValueText" class="text-slate-300 font-bold truncate">0%</span>
                 </div>
-                <div class="w-full h-2.5 bg-slate-900/90 rounded-full p-0.5 border border-emerald-500/40 overflow-hidden relative">
+                <div class="w-full h-2 bg-slate-900/90 rounded-full p-0.5 border border-emerald-500/40 overflow-hidden relative">
                     <div id="evolutionBar" class="h-full rounded-full bg-gradient-to-r transition-all" style="width: 0%"></div>
                 </div>
-                <div id="missileAmmoRow" class="flex items-center justify-between mt-1 text-[10px] font-orbitron">
-                    <span id="specialAbilityLabel" class="text-slate-300">SPECIAL <span class="text-emerald-400">[X / F]</span>:</span>
-                    <div id="ammoPips" class="flex items-center gap-1"></div>
+                <div id="missileAmmoRow" class="flex items-center justify-between mt-0.5 text-[9px] font-orbitron">
+                    <span id="specialAbilityLabel" class="text-slate-300 truncate">SPECIAL:</span>
+                    <div id="ammoPips" class="flex items-center gap-1 shrink-0"></div>
                 </div>
             </div>
 
-            <!-- Telemetry Readout: Level, Orbs, Speed, High Score, Score -->
-            <div class="flex items-center gap-2.5 sm:gap-3.5 ml-auto">
+            <!-- Score Readout & One-Tap Sound Button -->
+            <div class="flex items-center gap-2 sm:gap-3 ml-auto">
                 <div class="text-right">
-                    <div class="text-[9px] font-orbitron text-slate-400 uppercase tracking-wider">LEVEL</div>
-                    <div id="levelDisplay" class="font-orbitron font-black text-xs sm:text-sm text-lime-300">1</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[9px] font-orbitron text-slate-400 uppercase tracking-wider">SPEED</div>
-                    <div id="speedDisplay" class="font-orbitron font-bold text-xs sm:text-sm text-amber-400">1.0x</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[9px] font-orbitron text-slate-400 uppercase tracking-wider">BEST</div>
+                    <div class="text-[8px] sm:text-[9px] font-orbitron text-slate-400 uppercase tracking-wider">BEST</div>
                     <div id="highScoreDisplay" class="font-orbitron font-bold text-xs sm:text-sm text-emerald-400/90">00000</div>
                 </div>
-                <div class="text-right min-w-[64px]">
-                    <div class="text-[9px] font-orbitron text-slate-400 uppercase tracking-wider">SCORE</div>
-                    <div id="scoreDisplay" class="font-orbitron font-black text-base sm:text-xl text-white tracking-wider">00000</div>
+                <div class="text-right min-w-[50px] sm:min-w-[60px]">
+                    <div class="text-[8px] sm:text-[9px] font-orbitron text-slate-400 uppercase tracking-wider">SCORE</div>
+                    <div id="scoreDisplay" class="font-orbitron font-black text-sm sm:text-lg text-white tracking-wider">00000</div>
                 </div>
+                <button id="soundToggleBtn" title="Toggle Game Sound [M]" class="px-2 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-orbitron font-bold text-[9px] sm:text-[10px] cursor-pointer shrink-0">
+                    SOUND: ON
+                </button>
             </div>
         </div>
 
-        <!-- Row 2: Interactive Omnitrix 10-Slot Level-Unlockable Alien Bar + Secret Code 'RRR' Input -->
-        <div class="py-1.5 border-b border-emerald-500/20">
-            <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
-                <span class="text-[10px] font-orbitron text-emerald-400 font-bold tracking-wider uppercase flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-                    OMNITRIX PROGRESSION DIAL — UNLOCKS PER LEVEL (LVL 7+ ULTIMATE, LVL 10/15/20 MILESTONES):
+        <!-- Row 2: Swipeable Omnitrix Alien Bar + Compact Secret Code 'RRR' -->
+        <div id="rosterSection" class="pt-1">
+            <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="text-[9px] font-orbitron text-emerald-400 font-bold tracking-wider uppercase truncate">
+                    OMNITRIX DIAL <span class="mobile-hide-label">(SWIPE OR TAP ALIEN)</span>
                 </span>
 
-                <!-- Secret Code 'RRR' Input & Level Selector -->
-                <div class="flex items-center gap-1.5 ml-auto">
-                    <div class="flex items-center gap-1 bg-slate-900/90 border border-lime-400/50 rounded-lg px-2 py-0.5">
-                        <span class="text-[9px] font-orbitron text-lime-300 font-bold uppercase">SECRET CODE:</span>
-                        <input id="secretCodeInput" type="text" maxlength="6" placeholder="TYPE RRR" class="w-14 bg-transparent text-lime-300 font-orbitron font-black text-[10px] uppercase tracking-widest text-center focus:outline-none">
-                        <button id="secretCodeBtn" class="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-orbitron font-bold text-[9px] cursor-pointer">UNLOCK</button>
+                <div class="flex items-center gap-1 ml-auto shrink-0">
+                    <div class="flex items-center gap-1 bg-slate-900/90 border border-lime-400/50 rounded-lg px-1.5 py-0.5">
+                        <input id="secretCodeInput" type="text" maxlength="6" placeholder="CODE" class="w-12 bg-transparent text-lime-300 font-orbitron font-black text-[9px] uppercase tracking-widest text-center focus:outline-none">
+                        <button id="secretCodeBtn" title="Activate Secret Code RRR (Upchuck)" class="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-orbitron font-bold text-[8px] cursor-pointer">RRR</button>
                     </div>
-                    <button id="unlockAllBtn" title="Unlock All Levels & Aliens for Sandbox Testing" class="px-2 py-0.5 rounded-lg bg-slate-900 border border-amber-400/40 text-amber-300 font-orbitron font-bold text-[9px] cursor-pointer">
+                    <button id="unlockAllBtn" title="Advance +1 Level" class="px-1.5 py-0.5 rounded-lg bg-slate-900 border border-amber-400/40 text-amber-300 font-orbitron font-bold text-[9px] cursor-pointer">
                         +1 LVL
                     </button>
                 </div>
             </div>
 
-            <!-- 10 Alien Cards: Lvl 1 XLR8 -> Lvl 2 Jetray -> Lvl 3 Big Chill -> Lvl 4 Swampfire -> Lvl 5 Humungousaur -> Lvl 6 Cannonbolt -> Lvl 10 Grey Matter -> Lvl 15 Four Arms -> Lvl 20 Way Big -> Secret RRR Upchuck -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-1" id="alienRosterGrid">
+            <!-- 10 Alien Cards: Horizontal Touch-Scroll Ribbon on Mobile, Grid on Desktop -->
+            <div id="alienRosterGrid">
                 <!-- [1] Level 1: XLR8 -->
                 <button data-alien="xlr8" class="alien-card active rounded-xl px-1.5 py-1 bg-slate-900/90 border border-slate-700/80 flex items-center gap-1 text-left cursor-pointer">
                     <span class="w-5 h-5 rounded-md bg-cyan-950/80 border border-cyan-400/50 flex items-center justify-center font-orbitron font-black text-[9px] text-cyan-300 shrink-0">L1</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">XLR8</div>
-                        <div class="text-[8px] text-cyan-300 leading-tight truncate" id="status-xlr8">3x Jump + Blitz</div>
+                        <div class="text-[8px] text-cyan-300 leading-tight truncate" id="status-xlr8">3x Jump</div>
                     </div>
                 </button>
                 <!-- [2] Level 2: Jetray -->
@@ -485,7 +554,7 @@
                     <span class="w-5 h-5 rounded-md bg-red-900/60 border border-red-500/50 flex items-center justify-center font-orbitron font-black text-[9px] text-yellow-300 shrink-0">L2</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">JETRAY</div>
-                        <div class="text-[8px] text-yellow-300 leading-tight truncate" id="status-jetray">Unlock @ Lvl 2</div>
+                        <div class="text-[8px] text-yellow-300 leading-tight truncate" id="status-jetray">Lvl 2</div>
                     </div>
                 </button>
                 <!-- [3] Level 3: Big Chill -->
@@ -493,7 +562,7 @@
                     <span class="w-5 h-5 rounded-md bg-blue-950/80 border border-blue-400/50 flex items-center justify-center font-orbitron font-black text-[9px] text-sky-300 shrink-0">L3</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">BIG CHILL</div>
-                        <div class="text-[8px] text-sky-300 leading-tight truncate" id="status-bigchill">Unlock @ Lvl 3</div>
+                        <div class="text-[8px] text-sky-300 leading-tight truncate" id="status-bigchill">Lvl 3</div>
                     </div>
                 </button>
                 <!-- [4] Level 4: Swampfire -->
@@ -501,7 +570,7 @@
                     <span class="w-5 h-5 rounded-md bg-orange-950/80 border border-orange-500/50 flex items-center justify-center font-orbitron font-black text-[9px] text-orange-300 shrink-0">L4</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">SWAMPFIRE</div>
-                        <div class="text-[8px] text-orange-300 leading-tight truncate" id="status-swampfire">Unlock @ Lvl 4</div>
+                        <div class="text-[8px] text-orange-300 leading-tight truncate" id="status-swampfire">Lvl 4</div>
                     </div>
                 </button>
                 <!-- [5] Level 5: Humungousaur -->
@@ -509,7 +578,7 @@
                     <span class="w-5 h-5 rounded-md bg-amber-900/60 border border-amber-500/50 flex items-center justify-center font-orbitron font-black text-[9px] text-amber-300 shrink-0">L5</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">HUMUNGOUSAUR</div>
-                        <div class="text-[8px] text-emerald-400 leading-tight truncate" id="status-humungousaur">Unlock @ Lvl 5</div>
+                        <div class="text-[8px] text-emerald-400 leading-tight truncate" id="status-humungousaur">Lvl 5</div>
                     </div>
                 </button>
                 <!-- [6] Level 6: Cannonbolt -->
@@ -517,7 +586,7 @@
                     <span class="w-5 h-5 rounded-md bg-yellow-900/60 border border-yellow-400/50 flex items-center justify-center font-orbitron font-black text-[9px] text-yellow-300 shrink-0">L6</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">CANNONBOLT</div>
-                        <div class="text-[8px] text-amber-300 leading-tight truncate" id="status-cannonbolt">Unlock @ Lvl 6</div>
+                        <div class="text-[8px] text-amber-300 leading-tight truncate" id="status-cannonbolt">Lvl 6</div>
                     </div>
                 </button>
                 <!-- [7] Level 10: Grey Matter -->
@@ -525,7 +594,7 @@
                     <span class="w-5 h-5 rounded-md bg-emerald-950/80 border border-emerald-400/50 flex items-center justify-center font-orbitron font-black text-[9px] text-emerald-300 shrink-0">L10</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">GREY MATTER</div>
-                        <div class="text-[8px] text-emerald-300 leading-tight truncate" id="status-greymatter">Unlock @ Lvl 10</div>
+                        <div class="text-[8px] text-emerald-300 leading-tight truncate" id="status-greymatter">Lvl 10</div>
                     </div>
                 </button>
                 <!-- [8] Level 15: Four Arms -->
@@ -533,7 +602,7 @@
                     <span class="w-5 h-5 rounded-md bg-red-900/60 border border-red-400/50 flex items-center justify-center font-orbitron font-black text-[9px] text-red-300 shrink-0">L15</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">FOUR ARMS</div>
-                        <div class="text-[8px] text-red-300 leading-tight truncate" id="status-fourarms">Unlock @ Lvl 15</div>
+                        <div class="text-[8px] text-red-300 leading-tight truncate" id="status-fourarms">Lvl 15</div>
                     </div>
                 </button>
                 <!-- [9] Level 20: Way Big -->
@@ -541,7 +610,7 @@
                     <span class="w-5 h-5 rounded-md bg-cyan-950/80 border border-cyan-400/50 flex items-center justify-center font-orbitron font-black text-[9px] text-cyan-300 shrink-0">L20</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-white leading-tight truncate">WAY BIG</div>
-                        <div class="text-[8px] text-cyan-300 leading-tight truncate" id="status-waybig">Unlock @ Lvl 20</div>
+                        <div class="text-[8px] text-cyan-300 leading-tight truncate" id="status-waybig">Lvl 20</div>
                     </div>
                 </button>
                 <!-- [0] SECRET CODE 'RRR': Upchuck (Tongue Grab & Acid Spit!) -->
@@ -549,136 +618,42 @@
                     <span class="w-5 h-5 rounded-md bg-lime-400/20 border border-lime-400/60 flex items-center justify-center font-orbitron font-black text-[9px] text-lime-300 shrink-0">RRR</span>
                     <div class="truncate">
                         <div class="font-orbitron font-bold text-[9px] text-lime-300 leading-tight truncate">UPCHUCK</div>
-                        <div class="text-[8px] text-emerald-300 leading-tight truncate" id="status-upchuck">Code: 'RRR'</div>
+                        <div class="text-[8px] text-emerald-300 leading-tight truncate" id="status-upchuck">Code: RRR</div>
                     </div>
-                </button>
-            </div>
-        </div>
-
-        <!-- Row 3: Ben 10 Interactive Music Deck, Visualizer & Offline HTML Downloader -->
-        <div class="pt-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div class="flex flex-wrap items-center gap-1.5">
-                <!-- Play / Mute Music Button [M] -->
-                <button id="musicToggleBtn" title="Toggle Ben 10 Music [M]" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-orbitron font-bold text-[10px] flex items-center gap-1.5 transition cursor-pointer">
-                    <span id="musicStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span id="musicBtnLabel">MUSIC: ON [M]</span>
-                </button>
-
-                <!-- SFX Toggle Button -->
-                <button id="sfxToggleBtn" title="Toggle Sound Effects" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 font-orbitron font-bold text-[10px] transition cursor-pointer">
-                    SFX: ON
-                </button>
-
-                <!-- Track Selector -->
-                <div class="flex items-center gap-1 bg-slate-900/90 border border-emerald-500/30 rounded-lg px-2 py-0.5">
-                    <span class="text-[9px] font-orbitron text-emerald-400 uppercase hidden md:inline">TRACK:</span>
-                    <select id="trackSelect" class="bg-transparent text-slate-100 font-orbitron text-[10px] font-semibold cursor-pointer">
-                        <option value="auto" class="bg-slate-900 text-emerald-300">Auto (Evolves w/ Form)</option>
-                        <option value="classic" class="bg-slate-900 text-white">1: Classic Ben 10 Rock</option>
-                        <option value="ultimate" class="bg-slate-900 text-lime-300">2: Ultimate Alien Overdrive</option>
-                        <option value="cyber" class="bg-slate-900 text-cyan-300">3: Omnitrix Cyber Chase</option>
-                        <option value="custom" id="customTrackOption" disabled class="bg-slate-900 text-amber-300">4: Custom MP3 (Load File)</option>
-                    </select>
-                </div>
-
-                <!-- Volume Slider -->
-                <div class="flex items-center gap-1.5 bg-slate-900/80 border border-slate-800 rounded-lg px-2 py-0.5">
-                    <span class="text-[9px] font-orbitron text-slate-400">VOL</span>
-                    <input id="volumeSlider" type="range" min="0" max="100" value="75" class="omnitrix-slider w-14 sm:w-20">
-                </div>
-            </div>
-
-            <!-- Right side: Visualizer + Local MP3 Loader + Save Offline .HTML Button -->
-            <div class="flex items-center gap-1.5 ml-auto flex-wrap">
-                <span id="offlineStatusBadge" class="text-[9px] font-orbitron tracking-wider uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-lime-300 border border-emerald-400/40">
-                    OFFLINE READY
-                </span>
-                <div class="flex items-center gap-1.5 bg-black/80 border border-emerald-500/40 rounded-lg px-2 py-0.5">
-                    <span id="nowPlayingBadge" class="text-[9px] font-orbitron text-emerald-400 tracking-wider uppercase hidden sm:inline">CLASSIC THEME</span>
-                    <canvas id="visualizerCanvas" width="88" height="18" class="w-20 h-4 rounded"></canvas>
-                </div>
-
-                <label for="mp3UploadInput" title="Load Local MP3 File (Works Offline)" class="px-2 py-1 rounded-lg bg-slate-900 border border-emerald-500/40 text-emerald-300 font-orbitron font-bold text-[10px] cursor-pointer transition flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                    </svg>
-                    <span>LOAD MP3</span>
-                </label>
-                <input id="mp3UploadInput" type="file" accept="audio/*" class="hidden">
-
-                <!-- Download 100% Standalone Offline HTML File Button -->
-                <button id="downloadOfflineBtn" title="Download Complete Single-File Game to Play Anytime Without Internet" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-lime-400/60 text-lime-300 font-orbitron font-bold text-[10px] cursor-pointer transition flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
-                    </svg>
-                    <span>DOWNLOAD OFFLINE .HTML</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Game Canvas Container -->
-    <main class="w-full max-w-5xl relative flex-1 flex flex-col justify-center items-center min-h-[250px] sm:min-h-[340px] max-h-[470px]">
-        <div id="canvasWrapper" class="w-full h-[280px] sm:h-[360px] md:h-[400px] relative rounded-2xl overflow-hidden border-2 border-emerald-500/40 shadow-[0_0_40px_rgba(16,185,129,0.18)] bg-slate-950">
+    <!-- Main Game Canvas Container (Maximized for Mobile Viewport) -->
+    <main class="w-full max-w-5xl relative flex-1 flex flex-col justify-center items-center min-h-[175px] overflow-hidden">
+        <div id="canvasWrapper" class="w-full h-full relative rounded-2xl overflow-hidden border-2 border-emerald-500/40 shadow-[0_0_40px_rgba(16,185,129,0.18)] bg-slate-950">
             <canvas id="gameCanvas"></canvas>
 
             <!-- Start / Game Over Overlay Modal -->
-            <div id="overlayModal" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-3 sm:p-4 z-20 transition-opacity duration-300">
-                <div class="max-w-lg w-full omnitrix-panel rounded-2xl p-4 sm:p-5 text-center border border-emerald-500/60 shadow-2xl">
-                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-400/40 mb-2 omnitrix-glow-icon">
-                        <svg class="w-9 h-9" viewBox="0 0 100 100">
-                            <polygon points="8,8 34,26 26,34" fill="#cbd5e1"/>
-                            <polygon points="92,8 66,26 74,34" fill="#cbd5e1"/>
-                            <polygon points="8,92 34,74 26,66" fill="#cbd5e1"/>
-                            <polygon points="92,92 66,74 74,66" fill="#cbd5e1"/>
-                            <circle cx="50" cy="50" r="38" fill="#111827" stroke="#94a3b8" stroke-width="5"/>
-                            <circle cx="50" cy="50" r="31" fill="#22c55e"/>
-                            <path d="M 18,25 L 43,50 L 18,75 Z" fill="#090d16"/>
-                            <path d="M 82,25 L 57,50 L 82,75 Z" fill="#090d16"/>
-                        </svg>
-                    </div>
-
-                    <h2 id="modalTitle" class="font-orbitron font-black text-lg sm:text-2xl text-white tracking-wide mb-1">
-                        IT'S HERO TIME! — LEVEL PROGRESSION EDITION
+            <div id="overlayModal" class="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-2 sm:p-4 z-20 transition-opacity duration-300">
+                <div class="max-w-lg w-full omnitrix-panel rounded-2xl p-3 sm:p-5 text-center border border-emerald-500/60 shadow-2xl my-auto">
+                    <h2 id="modalTitle" class="font-orbitron font-black text-sm sm:text-2xl text-white tracking-wide mb-1">
+                        IT'S HERO TIME!
                     </h2>
-                    <p id="modalSubtitle" class="text-xs text-slate-300 mb-3">
-                        Start at <span class="text-cyan-300 font-semibold">Level 1 (XLR8)</span> and advance levels across <span class="text-emerald-400 font-semibold">Space, Null Void, Forever Knights & Vilgax Arenas</span>! Unlock <span class="text-yellow-300 font-semibold">Jetray (L2), Big Chill (L3), Swampfire (L4), Humungousaur (L5), Cannonbolt (L6)</span>, <span class="text-lime-300 font-semibold">Ultimate Forms (L7+)</span>, <span class="text-emerald-300 font-semibold">Grey Matter (L10), Four Arms (L15), Way Big (L20)</span>, or type secret code <span class="text-lime-300 font-black">'RRR'</span> for <span class="text-lime-300 font-bold">UPCHUCK (Tongue Grab & Spit)</span>!
+                    <p id="modalSubtitle" class="text-[11px] sm:text-xs text-slate-300 mb-2.5 leading-tight">
+                        Unlock new Aliens & Ben 10 Arenas every level! Reach <span class="text-lime-300 font-semibold">Level 7+ for Ultimate Forms</span>, or tap <span class="text-lime-300 font-black">'RRR'</span> for <span class="text-lime-300 font-bold">UPCHUCK</span>!
                     </p>
 
                     <!-- Final Score Box (Shown on Game Over) -->
-                    <div id="gameOverStats" class="hidden grid-cols-2 gap-2 mb-3 p-2 rounded-xl bg-slate-900/90 border border-slate-700/80">
+                    <div id="gameOverStats" class="hidden grid-cols-2 gap-2 mb-2.5 p-1.5 sm:p-2 rounded-xl bg-slate-900/90 border border-slate-700/80">
                         <div>
-                            <div class="text-[10px] font-orbitron text-slate-400">FINAL SCORE</div>
-                            <div id="finalScoreText" class="font-orbitron font-black text-lg text-white">0</div>
+                            <div class="text-[9px] sm:text-[10px] font-orbitron text-slate-400">FINAL SCORE</div>
+                            <div id="finalScoreText" class="font-orbitron font-black text-base sm:text-lg text-white">0</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-orbitron text-slate-400">BEST RECORD</div>
-                            <div id="bestScoreText" class="font-orbitron font-black text-lg text-emerald-400">0</div>
-                        </div>
-                    </div>
-
-                    <!-- Mini Controls Legend -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-left text-[10px] bg-slate-900/75 p-2 rounded-xl border border-emerald-500/20 mb-3.5">
-                        <div>
-                            <div class="font-orbitron text-emerald-400 font-bold">JUMP / GLIDE</div>
-                            <div class="text-slate-300">Space / W / Up</div>
-                        </div>
-                        <div>
-                            <div class="font-orbitron text-amber-400 font-bold">ROLL / SLAM / PHASE</div>
-                            <div class="text-slate-300">Down / S Key</div>
-                        </div>
-                        <div>
-                            <div class="font-orbitron text-cyan-400 font-bold">ALIEN SPECIAL</div>
-                            <div class="text-slate-300">X / F Key</div>
-                        </div>
-                        <div>
-                            <div class="font-orbitron text-lime-300 font-bold">SWAP / EVOLVE</div>
-                            <div class="text-slate-300">1-6 / Q / E Key</div>
+                            <div class="text-[9px] sm:text-[10px] font-orbitron text-slate-400">BEST RECORD</div>
+                            <div id="bestScoreText" class="font-orbitron font-black text-base sm:text-lg text-emerald-400">0</div>
                         </div>
                     </div>
 
-                    <button id="startBtn" class="w-full py-2.5 sm:py-3 px-6 rounded-xl font-orbitron font-black text-sm sm:text-base tracking-wider uppercase bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 hover:from-emerald-500 hover:to-green-400 text-slate-950 shadow-[0_0_25px_rgba(34,197,94,0.5)] transition transform active:scale-95 cursor-pointer">
-                        ACTIVATE OMNITRIX & MUSIC [SPACE]
+                    <button id="startBtn" class="w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl font-orbitron font-black text-xs sm:text-base tracking-wider uppercase bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 hover:from-emerald-500 hover:to-green-400 text-slate-950 shadow-[0_0_25px_rgba(34,197,94,0.5)] transition transform active:scale-95 cursor-pointer">
+                        TAP TO PLAY
                     </button>
                 </div>
             </div>
@@ -686,154 +661,60 @@
     </main>
 
     <!-- Bottom Arcade Touch & Mouse Control Deck -->
-    <footer class="w-full max-w-5xl mt-1.5">
-        <div class="grid grid-cols-5 gap-1.5 sm:gap-2.5">
+    <footer class="w-full max-w-5xl shrink-0">
+        <div class="grid grid-cols-5 gap-1 sm:gap-2.5">
             <!-- Jump / Glide / Triple Jump Button -->
-            <button id="btnJump" class="arcade-btn col-span-1 py-2 sm:py-2.5 px-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-emerald-500/50 flex flex-col items-center justify-center cursor-pointer">
-                <span id="btnJumpTitle" class="font-orbitron font-bold text-[11px] sm:text-xs text-emerald-400">JUMP / 2X</span>
-                <span class="text-[9px] text-slate-400 hidden sm:inline">SPACE / UP</span>
+            <button id="btnJump" class="arcade-btn touch-control-btn col-span-1 py-2 sm:py-2.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-emerald-500/50 flex flex-col items-center justify-center cursor-pointer">
+                <span id="btnJumpTitle" class="font-orbitron font-bold text-[10px] sm:text-xs text-emerald-400 leading-tight">JUMP / 3X</span>
+                <span class="text-[8px] sm:text-[9px] text-slate-400">TAP / UP</span>
             </button>
 
             <!-- Duck / Slam / Sphere Roll / Phase -->
-            <button id="btnDuck" class="arcade-btn col-span-1 py-2 sm:py-2.5 px-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-amber-500/50 flex flex-col items-center justify-center cursor-pointer">
-                <span id="btnDuckTitle" class="font-orbitron font-bold text-[11px] sm:text-xs text-amber-400">CROUCH / SLAM</span>
-                <span class="text-[9px] text-slate-400 hidden sm:inline">DOWN / S</span>
+            <button id="btnDuck" class="arcade-btn touch-control-btn col-span-1 py-2 sm:py-2.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-amber-500/50 flex flex-col items-center justify-center cursor-pointer">
+                <span id="btnDuckTitle" class="font-orbitron font-bold text-[10px] sm:text-xs text-amber-400 leading-tight">SLAM / ROLL</span>
+                <span class="text-[8px] sm:text-[9px] text-slate-400">HOLD / DOWN</span>
             </button>
 
             <!-- Alien Special Attack -->
-            <button id="btnShoot" class="arcade-btn col-span-1 py-2 sm:py-2.5 px-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-cyan-500/50 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer">
-                <span id="btnShootTitle" class="font-orbitron font-bold text-[11px] sm:text-xs text-cyan-400">SPECIAL [X]</span>
-                <span id="btnShootSub" class="text-[9px] text-slate-400 truncate max-w-full">BIO-CANNON</span>
+            <button id="btnShoot" class="arcade-btn touch-control-btn col-span-1 py-2 sm:py-2.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-cyan-500/50 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer">
+                <span id="btnShootTitle" class="font-orbitron font-bold text-[10px] sm:text-xs text-cyan-400 leading-tight">SPECIAL</span>
+                <span id="btnShootSub" class="text-[8px] sm:text-[9px] text-slate-400 truncate max-w-full">TORNADO</span>
             </button>
 
             <!-- Cycle Alien Dial [Q] -->
-            <button id="btnSwapAlien" class="arcade-btn col-span-1 py-2 sm:py-2.5 px-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-emerald-400/50 flex flex-col items-center justify-center cursor-pointer">
-                <span class="font-orbitron font-bold text-[11px] sm:text-xs text-emerald-300">NEXT ALIEN</span>
-                <span class="text-[9px] text-slate-400">DIAL [Q / 1-6]</span>
+            <button id="btnSwapAlien" class="arcade-btn touch-control-btn col-span-1 py-2 sm:py-2.5 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 border-2 border-emerald-400/50 flex flex-col items-center justify-center cursor-pointer">
+                <span class="font-orbitron font-bold text-[10px] sm:text-xs text-emerald-300 leading-tight">NEXT ALIEN</span>
+                <span class="text-[8px] sm:text-[9px] text-slate-400">DIAL [Q]</span>
             </button>
 
             <!-- Manual Ultimatrix Dial / Form Toggle -->
-            <button id="btnEvolve" class="arcade-btn col-span-1 py-2 sm:py-2.5 px-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 border-2 border-lime-400/60 flex flex-col items-center justify-center cursor-pointer">
-                <span id="btnEvolveTitle" class="font-orbitron font-bold text-[11px] sm:text-xs text-lime-300">ULTIMATRIX</span>
-                <span id="btnEvolveSub" class="text-[9px] text-emerald-200/80">EVOLVE [E]</span>
+            <button id="btnEvolve" class="arcade-btn touch-control-btn col-span-1 py-2 sm:py-2.5 px-1 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 border-2 border-lime-400/60 flex flex-col items-center justify-center cursor-pointer">
+                <span id="btnEvolveTitle" class="font-orbitron font-bold text-[10px] sm:text-xs text-lime-300 leading-tight">ULTIMATE</span>
+                <span id="btnEvolveSub" class="text-[8px] sm:text-[9px] text-emerald-200/80">EVOLVE [E]</span>
             </button>
         </div>
     </footer>
 
     <script>
-        /*******************************************************************************
-         * 1. BEN 10 MULTI-TRACK SYNTHESIZER, SEQUENCER & SOUND ENGINE (WEB AUDIO API)
-         *******************************************************************************/
+        /********************************************************************
+         * 1. WEB AUDIO API SYNTHESIZER & DYNAMIC BEN 10 SOUNDTRACK
+         ********************************************************************/
         class Ben10SoundSystem {
             constructor() {
                 this.ctx = null;
-                this.analyser = null;
                 this.masterGain = null;
                 this.musicGain = null;
                 this.sfxGain = null;
-
                 this.musicEnabled = true;
                 this.sfxEnabled = true;
-                this.volume = 0.75;
-
-                this.selectedTrackMode = 'auto';
-                this.activeSynthTrack = 'classic';
-                this.isPlayingMusic = false;
-
-                this.currentStep = 0;
-                this.nextStepTime = 0;
+                this.volume = 0.65;
                 this.tempoMultiplier = 1.0;
-                this.schedulerTimer = null;
-
+                this.isPlayingMusic = false;
+                this.stepIndex = 0;
+                this.musicTimer = null;
+                this.isUltimateMode = false;
+                this.selectedTrackMode = 'auto';
                 this.customAudio = null;
-                this.customMediaSource = null;
-                this.freqData = new Uint8Array(32);
-
-                this.notes = {
-                    'B1': 61.74, 'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'F#2': 92.50, 'G2': 98.00, 'A2': 110.00, 'Bb2': 116.54, 'B2': 123.47,
-                    'C3': 130.81, 'D3': 146.83, 'Eb3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'A3': 220.00, 'Bb3': 233.08, 'B3': 246.94,
-                    'C4': 261.63, 'D4': 293.66, 'Eb4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
-                    'C5': 523.25, 'D5': 587.33, 'Eb5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'A5': 880.00, 'Bb5': 932.33, 'B5': 987.77
-                };
-
-                this.initPatterns();
-            }
-
-            initPatterns() {
-                this.patterns = {
-                    classic: {
-                        bpm: 136,
-                        lead: [
-                            'E5', null, 'G5', 'E5',  null, 'D5', 'E5', null,
-                            'G5', null, 'A5', 'Bb5', 'A5', 'G5', 'E5', null,
-                            'E5', null, 'G5', 'B5',  null, 'A5', 'G5', null,
-                            'D5', 'E5', 'G5', 'E5',  'D5', 'B4', 'E5', null
-                        ],
-                        bass: [
-                            'E2', 'E2', 'E3', 'E2',  'G2', 'G2', 'A2', 'B2',
-                            'E2', 'E2', 'E3', 'E2',  'Bb2', 'A2', 'G2', 'D2',
-                            'E2', 'E2', 'E3', 'E2',  'G2', 'G2', 'A2', 'B2',
-                            'C3', 'C3', 'D3', 'D3',  'E2', 'B2', 'E2', null
-                        ],
-                        arp: [
-                            'E4', 'B4', 'G4', 'B4',  'E4', 'B4', 'G4', 'B4',
-                            'E4', 'C5', 'A4', 'C5',  'Eb4', 'B4', 'F#4', 'B4',
-                            'E4', 'B4', 'G4', 'B4',  'E4', 'B4', 'G4', 'B4',
-                            'C4', 'G4', 'D4', 'A4',  'E4', 'B4', 'E5', 'B4'
-                        ],
-                        kick:  [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0,  1,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,0,1],
-                        snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0,  0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,1,0],
-                        hat:   [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1]
-                    },
-                    ultimate: {
-                        bpm: 148,
-                        lead: [
-                            'E4', 'E4', 'B4', null,  'C5', null, 'B4', 'A4',
-                            'G4', 'A4', 'B4', null,  'F#4', null, 'G4', 'A4',
-                            'B4', 'B4', 'E5', null,  'F5', null, 'E5', 'D5',
-                            'C5', 'B4', 'A4', 'G4',  'B4', null, 'E5', null
-                        ],
-                        bass: [
-                            'E2', 'E2', 'E2', 'E2',  'C3', 'C3', 'B2', 'A2',
-                            'G2', 'G2', 'G2', 'G2',  'D3', 'D3', 'B2', 'A2',
-                            'E2', 'E2', 'E2', 'E2',  'F2', 'F2', 'E2', 'D2',
-                            'C3', 'B2', 'A2', 'G2',  'B2', 'B2', 'E2', 'E2'
-                        ],
-                        arp: [
-                            'E5', 'B4', 'G4', 'E4',  'C5', 'G4', 'E4', 'C4',
-                            'G5', 'D5', 'B4', 'G4',  'F#5', 'D5', 'A4', 'F#4',
-                            'E5', 'B4', 'G4', 'E4',  'F5', 'C5', 'A4', 'F4',
-                            'E5', 'C5', 'A4', 'E4',  'B4', 'F#4', 'E5', 'G5'
-                        ],
-                        kick:  [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1,  1,0,1,0, 1,0,1,0, 1,1,0,1, 1,0,1,1],
-                        snare: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0,  0,0,1,0, 0,0,1,0, 0,0,1,0, 1,1,1,1],
-                        hat:   [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1]
-                    },
-                    cyber: {
-                        bpm: 144,
-                        lead: [
-                            'B4', null, 'E5', null,  'G5', 'F#5', 'E5', 'B4',
-                            'C5', null, 'E5', null,  'A5', 'G5', 'F#5', 'D5',
-                            'B4', null, 'E5', null,  'B5', 'A5', 'G5', 'E5',
-                            'C5', 'B4', 'A4', 'G4',  'F#4', 'G4', 'B4', 'E5'
-                        ],
-                        bass: [
-                            'E2', 'E3', 'E2', 'E3',  'E2', 'E3', 'G2', 'B2',
-                            'A2', 'A3', 'A2', 'A3',  'D2', 'D3', 'D2', 'F#2',
-                            'E2', 'E3', 'E2', 'E3',  'G2', 'G3', 'G2', 'B2',
-                            'C2', 'C3', 'B1', 'B2',  'E2', 'E3', 'E2', 'E3'
-                        ],
-                        arp: [
-                            'E4', 'G4', 'B4', 'E5',  'B4', 'G4', 'E4', 'G4',
-                            'A4', 'C5', 'E5', 'A5',  'D4', 'F#4', 'A4', 'D5',
-                            'E4', 'G4', 'B4', 'E5',  'G4', 'B4', 'D5', 'G5',
-                            'C4', 'E4', 'G4', 'C5',  'B3', 'Eb4', 'F#4', 'B4'
-                        ],
-                        kick:  [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,  1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0],
-                        snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0,  0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
-                        hat:   [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1,  1,0,1,1, 1,0,1,1, 1,0,1,1, 1,1,1,1]
-                    }
-                };
             }
 
             init() {
@@ -841,24 +722,17 @@
                     const AudioCtx = window.AudioContext || window.webkitAudioContext;
                     if (!AudioCtx) return;
                     this.ctx = new AudioCtx();
-
                     this.masterGain = this.ctx.createGain();
                     this.musicGain = this.ctx.createGain();
                     this.sfxGain = this.ctx.createGain();
-                    this.analyser = this.ctx.createAnalyser();
-                    this.analyser.fftSize = 64;
-                    this.analyser.smoothingTimeConstant = 0.75;
-                    this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
 
                     this.musicGain.connect(this.masterGain);
                     this.sfxGain.connect(this.masterGain);
-                    this.masterGain.connect(this.analyser);
-                    this.analyser.connect(this.ctx.destination);
-
+                    this.masterGain.connect(this.ctx.destination);
                     this.updateVolumes();
                 }
                 if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                    this.ctx.resume().catch(() => {});
                 }
             }
 
@@ -866,17 +740,12 @@
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 this.masterGain.gain.setTargetAtTime(this.volume, now, 0.02);
-                this.musicGain.gain.setTargetAtTime(this.musicEnabled ? 0.85 : 0.0, now, 0.03);
-                this.sfxGain.gain.setTargetAtTime(this.sfxEnabled ? 1.0 : 0.0, now, 0.02);
-                if (this.customAudio) {
-                    this.customAudio.muted = !this.musicEnabled;
-                    this.customAudio.volume = this.volume;
-                }
+                this.musicGain.gain.setTargetAtTime(this.musicEnabled ? 0.32 : 0, now, 0.03);
+                this.sfxGain.gain.setTargetAtTime(this.sfxEnabled ? 0.65 : 0, now, 0.02);
             }
 
-            setVolume(val) {
-                this.volume = Math.max(0, Math.min(1, val));
-                this.updateVolumes();
+            syncAutoForm(isUlt) {
+                this.isUltimateMode = !!isUlt;
             }
 
             toggleMusic() {
@@ -885,592 +754,325 @@
                 this.updateVolumes();
                 if (this.musicEnabled && !this.isPlayingMusic) {
                     this.startMusic();
-                } else if (!this.musicEnabled && this.customAudio) {
-                    this.customAudio.pause();
-                } else if (this.musicEnabled && this.selectedTrackMode === 'custom' && this.customAudio) {
-                    this.customAudio.play().catch(() => {});
                 }
                 return this.musicEnabled;
             }
 
-            toggleSfx() {
-                this.init();
-                this.sfxEnabled = !this.sfxEnabled;
-                this.updateVolumes();
-                return this.sfxEnabled;
-            }
-
-            setTrackMode(mode, isUltimateForm = false) {
-                this.init();
-                this.selectedTrackMode = mode;
-
-                if (mode === 'custom') {
-                    if (this.customAudio && this.musicEnabled) {
-                        this.customAudio.play().catch(() => {});
-                    }
-                } else {
-                    if (this.customAudio) {
-                        this.customAudio.pause();
-                    }
-                    if (mode === 'auto') {
-                        this.activeSynthTrack = isUltimateForm ? 'ultimate' : 'classic';
-                    } else {
-                        this.activeSynthTrack = mode;
-                    }
-                    if (!this.isPlayingMusic && this.musicEnabled) {
-                        this.startMusic();
-                    }
-                }
-                this.updateNowPlayingLabel();
-            }
-
-            syncAutoForm(isUltimateForm) {
-                if (this.selectedTrackMode === 'auto') {
-                    const nextTrack = isUltimateForm ? 'ultimate' : 'classic';
-                    if (this.activeSynthTrack !== nextTrack) {
-                        this.activeSynthTrack = nextTrack;
-                        this.updateNowPlayingLabel();
-                    }
-                }
-            }
-
-            updateNowPlayingLabel() {
-                const badge = document.getElementById('nowPlayingBadge');
-                if (!badge) return;
-                if (this.selectedTrackMode === 'custom') {
-                    badge.textContent = 'CUSTOM MP3';
-                    badge.className = 'text-[9px] font-orbitron text-amber-300 tracking-wider uppercase hidden sm:inline';
-                } else if (this.activeSynthTrack === 'ultimate') {
-                    badge.textContent = 'ULTIMATE OVERDRIVE';
-                    badge.className = 'text-[9px] font-orbitron text-lime-300 tracking-wider uppercase hidden sm:inline';
-                } else if (this.activeSynthTrack === 'cyber') {
-                    badge.textContent = 'CYBER CHASE';
-                    badge.className = 'text-[9px] font-orbitron text-cyan-300 tracking-wider uppercase hidden sm:inline';
-                } else {
-                    badge.textContent = 'CLASSIC BEN 10';
-                    badge.className = 'text-[9px] font-orbitron text-emerald-400 tracking-wider uppercase hidden sm:inline';
-                }
-            }
-
-            loadCustomMP3(file) {
-                if (!file) return;
-                this.init();
-                const url = URL.createObjectURL(file);
-                if (this.customAudio) {
-                    this.customAudio.pause();
-                } else {
-                    this.customAudio = new Audio();
-                    this.customAudio.loop = true;
-                    this.customAudio.crossOrigin = "anonymous";
-                    try {
-                        this.customMediaSource = this.ctx.createMediaElementSource(this.customAudio);
-                        this.customMediaSource.connect(this.musicGain);
-                    } catch (e) {}
-                }
-                this.customAudio.src = url;
-                const opt = document.getElementById('customTrackOption');
-                if (opt) {
-                    opt.disabled = false;
-                    opt.textContent = `4: ${file.name.slice(0, 18)}`;
-                }
-                const select = document.getElementById('trackSelect');
-                if (select) select.value = 'custom';
-                this.setTrackMode('custom');
-                if (this.musicEnabled) {
-                    this.customAudio.play().catch(() => {});
-                }
-            }
-
             startMusic() {
                 this.init();
-                if (this.isPlayingMusic) return;
+                if (!this.ctx || this.isPlayingMusic) return;
                 this.isPlayingMusic = true;
-                this.currentStep = 0;
-                this.nextStepTime = this.ctx.currentTime + 0.05;
-                this.updateNowPlayingLabel();
-
-                const scheduleLoop = () => {
-                    if (!this.isPlayingMusic) return;
-                    if (this.ctx && this.ctx.state === 'running') {
-                        while (this.nextStepTime < this.ctx.currentTime + 0.12) {
-                            if (this.musicEnabled && this.selectedTrackMode !== 'custom') {
-                                this.scheduleStep(this.currentStep, this.nextStepTime);
-                            }
-                            const pattern = this.patterns[this.activeSynthTrack] || this.patterns.classic;
-                            const effectiveBpm = pattern.bpm * Math.min(1.22, 0.96 + (this.tempoMultiplier - 1) * 0.15);
-                            const secondsPer16th = (60 / effectiveBpm) / 4;
-                            this.nextStepTime += secondsPer16th;
-                            this.currentStep = (this.currentStep + 1) % 32;
-                        }
-                    }
-                    this.schedulerTimer = setTimeout(scheduleLoop, 25);
-                };
-                scheduleLoop();
+                this.scheduleNextBeat();
             }
 
-            scheduleStep(step, time) {
-                const pat = this.patterns[this.activeSynthTrack] || this.patterns.classic;
-                const isUlt = this.activeSynthTrack === 'ultimate';
+            scheduleNextBeat() {
+                if (!this.isPlayingMusic) return;
+                if (this.musicEnabled && this.ctx && this.ctx.state === 'running') {
+                    this.playSequencerStep(this.stepIndex);
+                    this.stepIndex = (this.stepIndex + 1) % 16;
+                }
+                const stepMs = Math.max(95, 155 / Math.min(1.6, this.tempoMultiplier));
+                this.musicTimer = setTimeout(() => this.scheduleNextBeat(), stepMs);
+            }
 
-                const leadNote = pat.lead[step];
-                if (leadNote && this.notes[leadNote]) {
-                    this.playSynthNote(this.notes[leadNote], time, 0.17, isUlt ? 'sawtooth' : 'square', isUlt ? 0.16 : 0.13, true);
+            playSequencerStep(step) {
+                const now = this.ctx.currentTime;
+                const bassNotes = this.isUltimateMode
+                    ? [65.41, 65.41, 77.78, 65.41, 87.31, 77.78, 98.00, 77.78]
+                    : [73.42, 73.42, 87.31, 73.42, 98.00, 87.31, 110.00, 87.31];
+                const leadNotes = this.isUltimateMode
+                    ? [261.63, 311.13, 349.23, 392.00, 466.16, 392.00, 349.23, 311.13]
+                    : [293.66, 349.23, 392.00, 440.00, 523.25, 440.00, 392.00, 349.23];
+
+                // Driving Bassline
+                if (step % 2 === 0) {
+                    const bOsc = this.ctx.createOscillator();
+                    const bGain = this.ctx.createGain();
+                    bOsc.type = 'sawtooth';
+                    bOsc.frequency.setValueAtTime(bassNotes[(step / 2) % bassNotes.length], now);
+                    bGain.gain.setValueAtTime(0.18, now);
+                    bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                    bOsc.connect(bGain);
+                    bGain.connect(this.musicGain);
+                    bOsc.start(now);
+                    bOsc.stop(now + 0.15);
                 }
 
-                const bassNote = pat.bass[step];
-                if (bassNote && this.notes[bassNote]) {
-                    this.playBassNote(this.notes[bassNote], time, 0.14, isUlt ? 0.22 : 0.19);
+                // Heroic Lead Synth
+                if (step % 2 === 1 || step === 0 || step === 8) {
+                    const lOsc = this.ctx.createOscillator();
+                    const lGain = this.ctx.createGain();
+                    lOsc.type = this.isUltimateMode ? 'square' : 'triangle';
+                    lOsc.frequency.setValueAtTime(leadNotes[step % leadNotes.length], now);
+                    lGain.gain.setValueAtTime(0.12, now);
+                    lGain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+                    lOsc.connect(lGain);
+                    lGain.connect(this.musicGain);
+                    lOsc.start(now);
+                    lOsc.stop(now + 0.14);
                 }
-
-                const arpNote = pat.arp[step];
-                if (arpNote && this.notes[arpNote]) {
-                    this.playSynthNote(this.notes[arpNote], time, 0.09, 'triangle', 0.08, false);
-                }
-
-                if (pat.kick[step]) this.playKick(time);
-                if (pat.snare[step]) this.playSnare(time);
-                if (pat.hat[step]) this.playHiHat(time, step % 2 === 0 ? 0.05 : 0.025);
             }
 
-            playSynthNote(freq, time, duration, type = 'sawtooth', peakGain = 0.14, detuneLayer = false) {
-                try {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = type;
-                    osc.frequency.setValueAtTime(freq, time);
-
-                    gain.gain.setValueAtTime(0.001, time);
-                    gain.gain.linearRampToValueAtTime(peakGain, time + 0.015);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-
-                    osc.connect(gain);
-                    gain.connect(this.musicGain);
-                    osc.start(time);
-                    osc.stop(time + duration + 0.01);
-
-                    if (detuneLayer) {
-                        const osc2 = this.ctx.createOscillator();
-                        osc2.type = 'sawtooth';
-                        osc2.frequency.setValueAtTime(freq * 1.006, time);
-                        osc2.connect(gain);
-                        osc2.start(time);
-                        osc2.stop(time + duration + 0.01);
-                    }
-                } catch (e) {}
+            playJump() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(580, now + 0.16);
+                g.gain.setValueAtTime(0.3, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 0.17);
+                osc.connect(g);
+                g.connect(this.sfxGain);
+                osc.start(now);
+                osc.stop(now + 0.18);
             }
 
-            playBassNote(freq, time, duration, peakGain = 0.2) {
-                try {
-                    const osc = this.ctx.createOscillator();
-                    const filter = this.ctx.createBiquadFilter();
-                    const gain = this.ctx.createGain();
-
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(freq, time);
-
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(520, time);
-                    filter.frequency.exponentialRampToValueAtTime(140, time + duration);
-
-                    gain.gain.setValueAtTime(0.001, time);
-                    gain.gain.linearRampToValueAtTime(peakGain, time + 0.01);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-
-                    osc.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(this.musicGain);
-                    osc.start(time);
-                    osc.stop(time + duration + 0.01);
-                } catch (e) {}
+            playStomp(heavy = false) {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(heavy ? 95 : 130, now);
+                osc.frequency.exponentialRampToValueAtTime(28, now + (heavy ? 0.14 : 0.08));
+                g.gain.setValueAtTime(heavy ? 0.28 : 0.12, now);
+                g.gain.exponentialRampToValueAtTime(0.001, now + (heavy ? 0.15 : 0.09));
+                osc.connect(g);
+                g.connect(this.sfxGain);
+                osc.start(now);
+                osc.stop(now + (heavy ? 0.16 : 0.1));
             }
 
-            playKick(time) {
-                try {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(135, time);
-                    osc.frequency.exponentialRampToValueAtTime(36, time + 0.11);
-
-                    gain.gain.setValueAtTime(0.34, time);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-
-                    osc.connect(gain);
-                    gain.connect(this.musicGain);
-                    osc.start(time);
-                    osc.stop(time + 0.13);
-                } catch (e) {}
-            }
-
-            playSnare(time) {
-                try {
-                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
-                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.04));
-                    }
-                    const noise = this.ctx.createBufferSource();
-                    noise.buffer = buffer;
-
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'highpass';
-                    filter.frequency.setValueAtTime(300, time);
-
-                    const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0.22, time);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
-
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(this.musicGain);
-                    noise.start(time);
-                } catch (e) {}
-            }
-
-            playHiHat(time, peak = 0.04) {
-                try {
-                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.04);
-                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.012));
-                    }
-                    const noise = this.ctx.createBufferSource();
-                    noise.buffer = buffer;
-
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'highpass';
-                    filter.frequency.setValueAtTime(5500, time);
-
-                    const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(peak, time);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.038);
-
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(this.musicGain);
-                    noise.start(time);
-                } catch (e) {}
-            }
-
-            getVisualizerData() {
-                if (!this.analyser) return this.freqData;
-                this.analyser.getByteFrequencyData(this.freqData);
-                return this.freqData;
-            }
-
-            /******************** BEN 10 PROCEDURAL SOUND EFFECTS ********************/
-            playOmnitrixDialSwap() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const freqs = [330, 523.25, 659.25, 1046.5];
-                    freqs.forEach((f, i) => {
-                        const osc = this.ctx.createOscillator();
-                        const gain = this.ctx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(f, now + i * 0.035);
-                        gain.gain.setValueAtTime(0.18, now + i * 0.035);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.035 + 0.14);
-                        osc.connect(gain);
-                        gain.connect(this.sfxGain);
-                        osc.start(now + i * 0.035);
-                        osc.stop(now + i * 0.035 + 0.15);
-                    });
-                } catch (e) {}
-            }
-
-            playStomp(isHeavy = false) {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = isHeavy ? 'sawtooth' : 'triangle';
-                    osc.frequency.setValueAtTime(isHeavy ? 72 : 115, now);
-                    osc.frequency.exponentialRampToValueAtTime(26, now + 0.075);
-
-                    gain.gain.setValueAtTime(isHeavy ? 0.14 : 0.08, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.085);
-                } catch (e) {}
-            }
-
-            playSlamShockwave() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(165, now);
-                    osc.frequency.exponentialRampToValueAtTime(22, now + 0.32);
-
-                    gain.gain.setValueAtTime(0.38, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
-
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.35);
-                } catch (e) {}
-            }
-
-            playJump(jumpNum = 1) {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = jumpNum > 1 ? 'sawtooth' : 'sine';
-                    const startFreq = 150 + (jumpNum - 1) * 90;
-                    osc.frequency.setValueAtTime(startFreq, now);
-                    osc.frequency.exponentialRampToValueAtTime(startFreq * 2.6, now + 0.17);
-
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.19);
-                } catch (e) {}
-            }
-
-            playEvolution() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const freqs = [220, 329.63, 440, 659.25, 880];
-                    freqs.forEach((f, idx) => {
-                        const osc = this.ctx.createOscillator();
-                        const gain = this.ctx.createGain();
-                        osc.type = idx % 2 === 0 ? 'sawtooth' : 'square';
-                        osc.frequency.setValueAtTime(f * 0.5, now + idx * 0.04);
-                        osc.frequency.exponentialRampToValueAtTime(f * 1.5, now + 0.48 + idx * 0.04);
-
-                        gain.gain.setValueAtTime(0.001, now);
-                        gain.gain.linearRampToValueAtTime(0.14, now + 0.08 + idx * 0.04);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.78);
-
-                        osc.connect(gain);
-                        gain.connect(this.sfxGain);
-                        osc.start(now);
-                        osc.stop(now + 0.8);
-                    });
-                } catch (e) {}
-            }
-
-            playSpecialAttack(type = 'missile') {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-
-                    if (type === 'laser') {
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(1200, now);
-                        osc.frequency.exponentialRampToValueAtTime(240, now + 0.14);
-                        gain.gain.setValueAtTime(0.22, now);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    } else if (type === 'cannonbolt') {
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(120, now);
-                        osc.frequency.linearRampToValueAtTime(420, now + 0.22);
-                        gain.gain.setValueAtTime(0.28, now);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.24);
-                    } else if (type === 'xlr8') {
-                        osc.type = 'sawtooth';
-                        osc.frequency.setValueAtTime(280, now);
-                        osc.frequency.exponentialRampToValueAtTime(1400, now + 0.19);
-                        gain.gain.setValueAtTime(0.24, now);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.21);
-                    } else if (type === 'cryo') {
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(980, now);
-                        osc.frequency.linearRampToValueAtTime(620, now + 0.2);
-                        gain.gain.setValueAtTime(0.24, now);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
-                    } else {
-                        osc.type = 'sawtooth';
-                        osc.frequency.setValueAtTime(540, now);
-                        osc.frequency.exponentialRampToValueAtTime(110, now + 0.16);
-                        gain.gain.setValueAtTime(0.26, now);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-                    }
-
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.25);
-                } catch (e) {}
-            }
-
-            playExplosion() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
-                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) {
-                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.08));
-                    }
-                    const noise = this.ctx.createBufferSource();
-                    noise.buffer = buffer;
-
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(680, now);
-                    filter.frequency.linearRampToValueAtTime(120, now + 0.24);
-
-                    const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(0.36, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-                    noise.connect(filter);
-                    filter.connect(gain);
-                    gain.connect(this.sfxGain);
-                    noise.start(now);
-                } catch (e) {}
-            }
-
-            playPickup() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(587.33, now);
-                    osc.frequency.setValueAtTime(880, now + 0.07);
-
-                    gain.gain.setValueAtTime(0.22, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.23);
-                } catch (e) {}
-            }
-
-            playGameOver() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.linearRampToValueAtTime(140, now + 0.2);
-                    osc.frequency.linearRampToValueAtTime(65, now + 0.5);
-
-                    gain.gain.setValueAtTime(0.26, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.52);
-
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.55);
-                } catch (e) {}
+            playShoot() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(680, now);
+                osc.frequency.exponentialRampToValueAtTime(160, now + 0.18);
+                g.gain.setValueAtTime(0.32, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 0.19);
+                osc.connect(g);
+                g.connect(this.sfxGain);
+                osc.start(now);
+                osc.stop(now + 0.2);
             }
 
             playTongueGrab() {
-                if (!this.sfxEnabled || !this.ctx) return;
-                try {
-                    const now = this.ctx.currentTime;
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(260, now);
+                osc.frequency.linearRampToValueAtTime(720, now + 0.09);
+                osc.frequency.linearRampToValueAtTime(340, now + 0.2);
+                g.gain.setValueAtTime(0.35, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 0.21);
+                osc.connect(g);
+                g.connect(this.sfxGain);
+                osc.start(now);
+                osc.stop(now + 0.22);
+            }
+
+            playExplosion() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.22;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const g = this.ctx.createGain();
+                g.gain.setValueAtTime(0.38, now);
+                g.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                noise.connect(g);
+                g.connect(this.sfxGain);
+                noise.start(now);
+            }
+
+            playPickup() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99].forEach((freq, idx) => {
                     const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const g = this.ctx.createGain();
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(240, now);
-                    osc.frequency.exponentialRampToValueAtTime(760, now + 0.11);
-                    osc.frequency.exponentialRampToValueAtTime(190, now + 0.24);
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+                    g.gain.setValueAtTime(0.22, now + idx * 0.05);
+                    g.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.05 + 0.14);
+                    osc.connect(g);
+                    g.connect(this.sfxGain);
+                    osc.start(now + idx * 0.05);
+                    osc.stop(now + idx * 0.05 + 0.15);
+                });
+            }
 
-                    gain.gain.setValueAtTime(0.28, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            playOmnitrixDialSwap() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [440, 587.33, 880].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.045);
+                    g.gain.setValueAtTime(0.25, now + idx * 0.045);
+                    g.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.045 + 0.12);
+                    osc.connect(g);
+                    g.connect(this.sfxGain);
+                    osc.start(now + idx * 0.045);
+                    osc.stop(now + idx * 0.045 + 0.13);
+                });
+            }
 
-                    osc.connect(gain);
-                    gain.connect(this.sfxGain);
-                    osc.start(now);
-                    osc.stop(now + 0.26);
-                } catch (e) {}
+            playEvolution() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [293.66, 369.99, 440, 587.33, 880].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                    g.gain.setValueAtTime(0.24, now + idx * 0.06);
+                    g.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.06 + 0.25);
+                    osc.connect(g);
+                    g.connect(this.sfxGain);
+                    osc.start(now + idx * 0.06);
+                    osc.stop(now + idx * 0.06 + 0.26);
+                });
+            }
+
+            playGameOver() {
+                if (!this.sfxEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [392.00, 349.23, 311.13, 261.63].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.11);
+                    g.gain.setValueAtTime(0.26, now + idx * 0.11);
+                    g.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.11 + 0.22);
+                    osc.connect(g);
+                    g.connect(this.sfxGain);
+                    osc.start(now + idx * 0.11);
+                    osc.stop(now + idx * 0.11 + 0.24);
+                });
             }
         }
 
         /********************************************************************
-         * 2. LEVEL PROGRESSION, BEN 10 UNIVERSE ARENAS & 10-ALIEN ROSTER
+         * 2. BEN 10 UNIVERSE ARENAS & 10-ALIEN ROSTER CONFIG
          ********************************************************************/
-        const ALIEN_KEYS = [
-            'xlr8', 'jetray', 'bigchill', 'swampfire', 'humungousaur',
-            'cannonbolt', 'greymatter', 'fourarms', 'waybig', 'upchuck'
-        ];
+        const POINTS_PER_LEVEL = 350;
 
-        const POINTS_PER_LEVEL = 220; // Every 220 points advances +1 Level & shifts Arena!
-
-        // Ben 10 Universe Arenas (Changes with every Level!)
         const BEN10_ARENAS = [
             {
                 id: 'bellwood',
-                name: 'BELLWOOD CITY',
-                skyTop: '#070b14', skyMid: '#101d29', skyBot: '#162923',
-                groundFill: '#1c1917', groundLine: '#22c55e',
-                starColor: '#e2e8f0', bldgFill: '#0d151c', bldgStroke: 'rgba(56, 189, 248, 0.2)',
-                windowColor: 'rgba(148, 163, 184, 0.2)', planetColor: '#22c55e'
+                name: 'BELLWOOD',
+                skyTop: '#020617',
+                skyMid: '#064e3b',
+                skyBot: '#022c22',
+                starColor: '#a7f3d0',
+                planetColor: '#22c55e',
+                bldgFill: '#0f172a',
+                bldgStroke: '#10b981',
+                windowColor: 'rgba(52, 211, 153, 0.25)',
+                groundFill: '#052e16',
+                groundLine: '#22c55e'
             },
             {
                 id: 'space',
-                name: 'GALVAN DEEP SPACE',
-                skyTop: '#02020a', skyMid: '#090d26', skyBot: '#151940',
-                groundFill: '#0f172a', groundLine: '#38bdf8',
-                starColor: '#67e8f9', bldgFill: '#1e1b4b', bldgStroke: 'rgba(56, 189, 248, 0.45)',
-                windowColor: 'rgba(103, 232, 249, 0.35)', planetColor: '#38bdf8'
+                name: 'GALVAN SPACE',
+                skyTop: '#030712',
+                skyMid: '#0f172a',
+                skyBot: '#1e1b4b',
+                starColor: '#e0f2fe',
+                planetColor: '#38bdf8',
+                bldgFill: '#1e293b',
+                bldgStroke: '#38bdf8',
+                windowColor: 'rgba(56, 189, 248, 0.28)',
+                groundFill: '#0f172a',
+                groundLine: '#38bdf8'
             },
             {
                 id: 'nullvoid',
-                name: 'THE NULL VOID',
-                skyTop: '#1f051d', skyMid: '#3b0736', skyBot: '#4c0519',
-                groundFill: '#27121e', groundLine: '#f43f5e',
-                starColor: '#fda4af', bldgFill: '#311028', bldgStroke: 'rgba(244, 63, 94, 0.4)',
-                windowColor: 'rgba(251, 113, 133, 0.28)', planetColor: '#f43f5e'
+                name: 'NULL VOID',
+                skyTop: '#1e1b4b',
+                skyMid: '#3b0764',
+                skyBot: '#4c1d95',
+                starColor: '#f0abfc',
+                planetColor: '#c084fc',
+                bldgFill: '#2e1065',
+                bldgStroke: '#a855f7',
+                windowColor: 'rgba(192, 132, 252, 0.25)',
+                groundFill: '#1e1b4b',
+                groundLine: '#c084fc'
             },
             {
                 id: 'methanos',
                 name: 'METHANOS SWAMP',
-                skyTop: '#07170d', skyMid: '#132a17', skyBot: '#273816',
-                groundFill: '#1a2e05', groundLine: '#a3e635',
-                starColor: '#bef264', bldgFill: '#142611', bldgStroke: 'rgba(163, 230, 53, 0.35)',
-                windowColor: 'rgba(250, 204, 21, 0.25)', planetColor: '#a3e635'
+                skyTop: '#142615',
+                skyMid: '#1a2e05',
+                skyBot: '#365314',
+                starColor: '#bef264',
+                planetColor: '#f97316',
+                bldgFill: '#1a2e05',
+                bldgStroke: '#84cc16',
+                windowColor: 'rgba(249, 115, 22, 0.28)',
+                groundFill: '#142615',
+                groundLine: '#84cc16'
             },
             {
                 id: 'foreverknights',
-                name: 'FOREVER KNIGHTS CITADEL',
-                skyTop: '#111827', skyMid: '#1e293b', skyBot: '#31101b',
-                groundFill: '#1e293b', groundLine: '#f59e0b',
-                starColor: '#fde047', bldgFill: '#0f172a', bldgStroke: 'rgba(245, 158, 11, 0.45)',
-                windowColor: 'rgba(239, 68, 68, 0.35)', planetColor: '#f59e0b'
+                name: 'FOREVER CITADEL',
+                skyTop: '#090d16',
+                skyMid: '#1e293b',
+                skyBot: '#334155',
+                starColor: '#fde047',
+                planetColor: '#facc15',
+                bldgFill: '#1e293b',
+                bldgStroke: '#94a3b8',
+                windowColor: 'rgba(250, 204, 21, 0.25)',
+                groundFill: '#0f172a',
+                groundLine: '#facc15'
             },
             {
                 id: 'vilgax',
-                name: 'VILGAX WARSHIP CHIMERAN',
-                skyTop: '#1a0404', skyMid: '#360909', skyBot: '#451208',
-                groundFill: '#180909', groundLine: '#ef4444',
-                starColor: '#fca5a5', bldgFill: '#290909', bldgStroke: 'rgba(239, 68, 68, 0.5)',
-                windowColor: 'rgba(249, 115, 22, 0.4)', planetColor: '#ef4444'
-            },
-            {
-                id: 'ultimatrix_core',
-                name: 'ULTIMATRIX CODON STREAM',
-                skyTop: '#021810', skyMid: '#062c1e', skyBot: '#093827',
-                groundFill: '#052e16', groundLine: '#4ade80',
-                starColor: '#4ade80', bldgFill: '#041f16', bldgStroke: 'rgba(74, 222, 128, 0.5)',
-                windowColor: 'rgba(163, 230, 53, 0.4)', planetColor: '#4ade80'
+                name: 'VILGAX WARSHIP',
+                skyTop: '#1f0808',
+                skyMid: '#450a0a',
+                skyBot: '#7f1d1d',
+                starColor: '#fca5a5',
+                planetColor: '#ef4444',
+                bldgFill: '#290d0d',
+                bldgStroke: '#ef4444',
+                windowColor: 'rgba(239, 68, 68, 0.3)',
+                groundFill: '#1f0808',
+                groundLine: '#ef4444'
             }
         ];
 
@@ -1480,70 +1082,90 @@
                 unlockLevel: 1,
                 name: 'XLR8',
                 ultimateName: 'HYPER-VELOCITY XLR8',
-                species: 'KINECELERAN DNA',
-                ultimateSpecies: 'APEX KINECELERAN',
-                passiveLabel: '3X JUMP + SPEED',
+                species: 'KINECELERAN',
+                ultimateSpecies: 'EVOLVED KINECELERAN',
+                shortDesc: '3x Jump',
+                passiveLabel: '3X JUMP + TORNADO',
                 specialName: 'TORNADO BLITZ',
-                shortDesc: '3x Jump + Blitz',
-                hint: 'LVL 1 ALIEN | [Space]: Triple Jump (3X) | [X/F]: Time-Dilated Tornado Blitz',
-                width: 74, normalHeight: 82, duckHeight: 48, ultWidth: 78, ultHeight: 84,
-                maxJumps: 3, gravityScale: 0.92, speedFactor: 1.20, jumpForce: 640, accentColor: '#38bdf8'
+                accentColor: '#38bdf8',
+                width: 68,
+                normalHeight: 74,
+                duckHeight: 44,
+                maxJumps: 3,
+                speedFactor: 1.15,
+                gravityScale: 0.96
             },
             jetray: {
                 id: 'jetray',
                 unlockLevel: 2,
                 name: 'JETRAY',
                 ultimateName: 'HYPERSPACE JETRAY',
-                species: 'AEROPHIBIAN DNA',
-                ultimateSpecies: 'TACHYON AEROPHIBIAN',
-                passiveLabel: 'SUPERSONIC GLIDE',
-                specialName: 'NEURO-LASER',
-                shortDesc: 'Glide + Laser',
-                hint: 'LVL 2 ALIEN | [Hold Jump]: Supersonic Wing Glide | [X/F]: Twin Neuroshock Lasers',
-                width: 82, normalHeight: 74, duckHeight: 46, ultWidth: 88, ultHeight: 78,
-                maxJumps: 3, gravityScale: 0.68, speedFactor: 1.12, jumpForce: 590, accentColor: '#facc15'
+                species: 'AEROPHIBIAN',
+                ultimateSpecies: 'EVOLVED AEROPHIBIAN',
+                shortDesc: 'Wing Glide',
+                passiveLabel: 'GLIDE + NEURO LASER',
+                specialName: 'NEURO LASER',
+                accentColor: '#facc15',
+                width: 72,
+                normalHeight: 74,
+                duckHeight: 44,
+                maxJumps: 2,
+                speedFactor: 1.10,
+                gravityScale: 0.85
             },
             bigchill: {
                 id: 'bigchill',
                 unlockLevel: 3,
                 name: 'BIG CHILL',
                 ultimateName: 'ULTIMATE BIG CHILL',
-                species: 'NECROFRIGGIAN DNA',
-                ultimateSpecies: 'FROSTFIRE NECROFRIGGIAN',
-                passiveLabel: 'CRYO-PHASE',
-                specialName: 'CRYO-BEAM',
-                shortDesc: 'Phase + Cryo',
-                hint: 'LVL 3 ALIEN | [Down/S]: Ghostly Phase Intangibility | [X/F]: Absolute Zero Cryo-Beam',
-                width: 74, normalHeight: 86, duckHeight: 50, ultWidth: 80, ultHeight: 90,
-                maxJumps: 2, gravityScale: 0.76, speedFactor: 1.05, jumpForce: 615, accentColor: '#60a5fa'
+                species: 'NECROFRIGGIAN',
+                ultimateSpecies: 'EVOLVED NECROFRIGGIAN',
+                shortDesc: 'Ghost Phase',
+                passiveLabel: 'CRYO-PHASE INTANGIBLE',
+                specialName: 'CRYO BEAM',
+                accentColor: '#38bdf8',
+                width: 68,
+                normalHeight: 78,
+                duckHeight: 46,
+                maxJumps: 2,
+                speedFactor: 1.04,
+                gravityScale: 0.90
             },
             swampfire: {
                 id: 'swampfire',
                 unlockLevel: 4,
                 name: 'SWAMPFIRE',
                 ultimateName: 'ULTIMATE SWAMPFIRE',
-                species: 'METHANOSIAN DNA',
+                species: 'METHANOSIAN',
                 ultimateSpecies: 'EVOLVED METHANOSIAN',
-                passiveLabel: 'REGEN + NAPALM',
-                specialName: 'FIREBALL',
-                shortDesc: 'Napalm Fireballs',
-                hint: 'LVL 4 ALIEN | [X/F]: Methane Fireball (Base) / Blue Napalm Plasma Bomb (Ultimate)',
-                width: 72, normalHeight: 88, duckHeight: 52, ultWidth: 78, ultHeight: 92,
-                maxJumps: 2, gravityScale: 0.96, speedFactor: 1.04, jumpForce: 645, accentColor: '#fb923c'
+                shortDesc: 'Fireballs',
+                passiveLabel: 'METHANE / BLUE NAPALM',
+                specialName: 'FIREBALL BLAST',
+                accentColor: '#f97316',
+                width: 70,
+                normalHeight: 78,
+                duckHeight: 46,
+                maxJumps: 2,
+                speedFactor: 1.03,
+                gravityScale: 0.98
             },
             humungousaur: {
                 id: 'humungousaur',
                 unlockLevel: 5,
                 name: 'HUMUNGOUSAUR',
                 ultimateName: 'ULTIMATE HUMUNGOUSAUR',
-                species: 'VAXASAURIAN DNA',
-                ultimateSpecies: 'HYPER-EVOLVED VAXASAURIAN',
-                passiveLabel: 'SEISMIC SLAM',
-                specialName: 'BIO-CANNON',
-                shortDesc: 'Slam + Missiles',
-                hint: 'LVL 5 ALIEN | [X/F]: Thunderclap / Ultimate Bio-Missiles | [Down]: Seismic Slam',
-                width: 78, normalHeight: 92, duckHeight: 54, ultWidth: 86, ultHeight: 98,
-                maxJumps: 2, gravityScale: 1.0, speedFactor: 1.0, jumpForce: 650, accentColor: '#4ade80'
+                species: 'VAXASAURIAN',
+                ultimateSpecies: 'EVOLVED VAXASAURIAN',
+                shortDesc: 'Bio-Missiles',
+                passiveLabel: 'SEISMIC SLAM + MISSILES',
+                specialName: 'BIO-MISSILE',
+                accentColor: '#4ade80',
+                width: 76,
+                normalHeight: 84,
+                duckHeight: 48,
+                maxJumps: 2,
+                speedFactor: 1.0,
+                gravityScale: 1.05
             },
             cannonbolt: {
                 id: 'cannonbolt',
@@ -1551,80 +1173,100 @@
                 name: 'CANNONBOLT',
                 ultimateName: 'ULTIMATE CANNONBOLT',
                 species: 'ARBURIAN PELAROTA',
-                ultimateSpecies: 'SPIKED PELAROTA',
-                passiveLabel: 'SPHERE ARMOR',
-                specialName: 'SPHERE ROLL',
+                ultimateSpecies: 'EVOLVED PELAROTA',
                 shortDesc: 'Sphere Smash',
-                hint: 'LVL 6 ALIEN | [X/F]: Invulnerable Wrecking Ball Dash | [Down]: Armored Sphere Roll',
-                width: 76, normalHeight: 84, duckHeight: 60, ultWidth: 82, ultHeight: 88,
-                maxJumps: 2, gravityScale: 1.08, speedFactor: 1.05, jumpForce: 660, accentColor: '#fbbf24'
+                passiveLabel: 'ARMORED SPHERE SMASH',
+                specialName: 'SPHERE DASH',
+                accentColor: '#facc15',
+                width: 72,
+                normalHeight: 76,
+                duckHeight: 54,
+                maxJumps: 2,
+                speedFactor: 1.08,
+                gravityScale: 1.02
             },
             greymatter: {
                 id: 'greymatter',
                 unlockLevel: 10,
                 name: 'GREY MATTER',
                 ultimateName: 'ULTIMATE ALBEDO BRAIN',
-                species: 'GALVAN DNA (LVL 10)',
-                ultimateSpecies: 'SUPREME GALVAN INTELLECT',
-                passiveLabel: 'MICRO HITBOX + HOVER',
-                specialName: 'NEURO-DISRUPTOR',
-                shortDesc: 'Galvan Tech Beam',
-                hint: 'LVL 10 MILESTONE | Tiny Dodge Hitbox + [X/F]: Galvan Neuro-Disruptor Ray',
-                width: 48, normalHeight: 52, duckHeight: 34, ultWidth: 58, ultHeight: 62,
-                maxJumps: 3, gravityScale: 0.72, speedFactor: 1.14, jumpForce: 620, accentColor: '#34d399'
+                species: 'GALVAN',
+                ultimateSpecies: 'EVOLVED GALVAN',
+                shortDesc: 'Hover Tech',
+                passiveLabel: 'GALVAN TELEKINESIS',
+                specialName: 'GALVAN BEAM',
+                accentColor: '#4ade80',
+                width: 52,
+                normalHeight: 54,
+                duckHeight: 36,
+                maxJumps: 3,
+                speedFactor: 1.12,
+                gravityScale: 0.82
             },
             fourarms: {
                 id: 'fourarms',
                 unlockLevel: 15,
                 name: 'FOUR ARMS',
-                ultimateName: 'APEX TETRAMAND',
-                species: 'TETRAMAND DNA (LVL 15)',
-                ultimateSpecies: 'WARLORD TETRAMAND',
-                passiveLabel: 'QUAD SHOCKWAVE',
-                specialName: 'QUAD-CLAP',
-                shortDesc: 'Quad Sonic Boom',
-                hint: 'LVL 15 MILESTONE | Super Leap + [X/F]: Quad-Arm Sonic Shockwave Boom',
-                width: 82, normalHeight: 94, duckHeight: 56, ultWidth: 88, ultHeight: 98,
-                maxJumps: 2, gravityScale: 0.95, speedFactor: 1.08, jumpForce: 700, accentColor: '#f87171'
+                ultimateName: 'ULTIMATE TETRAMAND',
+                species: 'TETRAMAND',
+                ultimateSpecies: 'EVOLVED TETRAMAND',
+                shortDesc: 'Sonic Clap',
+                passiveLabel: 'QUAD-ARM SONIC CLAP',
+                specialName: 'SONIC CLAP',
+                accentColor: '#ef4444',
+                width: 78,
+                normalHeight: 86,
+                duckHeight: 50,
+                maxJumps: 2,
+                speedFactor: 1.05,
+                gravityScale: 1.0
             },
             waybig: {
                 id: 'waybig',
                 unlockLevel: 20,
                 name: 'WAY BIG',
                 ultimateName: 'ULTIMATE WAY BIG',
-                species: "TO'KUSTAR DNA (LVL 20)",
-                ultimateSpecies: "HYPER-EVOLVED TO'KUSTAR",
-                passiveLabel: 'COSMIC GIANT',
+                species: "TO'KUSTAR",
+                ultimateSpecies: "EVOLVED TO'KUSTAR",
+                shortDesc: 'Cosmic Ray',
+                passiveLabel: 'COSMIC RAY + TITAN STOMP',
                 specialName: 'COSMIC RAY',
-                shortDesc: 'Cosmic Ray Beam',
-                hint: 'LVL 20 MILESTONE | Colossal Stomp + [X/F]: Cross-Arm Cosmic Ray Finisher',
-                width: 88, normalHeight: 106, duckHeight: 62, ultWidth: 94, ultHeight: 112,
-                maxJumps: 2, gravityScale: 0.90, speedFactor: 1.12, jumpForce: 710, accentColor: '#22d3ee'
+                accentColor: '#22d3ee',
+                width: 82,
+                normalHeight: 96,
+                duckHeight: 56,
+                maxJumps: 2,
+                speedFactor: 1.08,
+                gravityScale: 0.95
             },
             upchuck: {
                 id: 'upchuck',
-                unlockLevel: 999, // Unlocked via Secret Code 'RRR'
+                unlockLevel: 99,
                 isSecret: true,
-                name: 'UPCHUCK (GOURMAND)',
-                ultimateName: 'ULTIMATE GOURMAND KING',
-                species: 'GOURMAND DNA [CODE: RRR]',
-                ultimateSpecies: 'APEX VORTEX GOURMAND',
-                passiveLabel: 'TONGUE EAT & SPIT',
+                name: 'UPCHUCK',
+                ultimateName: 'GOURMAND OVERLOAD UPCHUCK',
+                species: 'GOURMAND',
+                ultimateSpecies: 'EVOLVED GOURMAND',
+                shortDesc: 'Tongue + Spit',
+                passiveLabel: 'TONGUE GRAB & ACID SPIT',
                 specialName: 'TONGUE / SPIT',
-                shortDesc: 'Tongue Grab+Spit',
-                hint: "SECRET 'RRR' ALIEN | [X/F]: Tongue Grabs & Swallows Obstacles, then Spits Explosive Acid!",
-                width: 64, normalHeight: 68, duckHeight: 46, ultWidth: 70, ultHeight: 74,
-                maxJumps: 3, gravityScale: 0.86, speedFactor: 1.10, jumpForce: 640, accentColor: '#a3e635'
+                accentColor: '#a3e635',
+                width: 64,
+                normalHeight: 64,
+                duckHeight: 42,
+                maxJumps: 2,
+                speedFactor: 1.06,
+                gravityScale: 0.95
             }
         };
+
+        const ALIEN_KEYS = Object.keys(ALIEN_ROSTER);
 
         /********************************************************************
          * 3. MAIN GAME STATE & LEVEL PROGRESSION TRACKING
          ********************************************************************/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const visCanvas = document.getElementById('visualizerCanvas');
-        const visCtx = visCanvas.getContext('2d');
         const audio = new Ben10SoundSystem();
 
         // UI Elements
@@ -1646,7 +1288,6 @@
         const highScoreDisplay = document.getElementById('highScoreDisplay');
         const scoreDisplay = document.getElementById('scoreDisplay');
         const orbsDisplay = document.getElementById('orbsDisplay');
-        const offlineStatusBadge = document.getElementById('offlineStatusBadge');
         const overlayModal = document.getElementById('overlayModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalSubtitle = document.getElementById('modalSubtitle');
@@ -1765,429 +1406,174 @@
         }
 
         /********************************************************************
-         * 4. RESPONSIVE CANVAS & ENVIRONMENT INITIALIZATION
+         * 4–7. RESPONSIVE CANVAS, ALIEN DIAL, COMBAT & SPAWNING HELPERS
          ********************************************************************/
-        function resizeCanvas() {
-            const wrapper = document.getElementById('canvasWrapper');
-            const rect = wrapper.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            groundY = canvas.height - 52;
-            if (player.isGrounded) {
-                player.y = groundY - player.height;
-            }
-            initBackgroundElements();
-        }
-
-        function initBackgroundElements() {
+        function initBackground() {
             bgStars = [];
-            for (let i = 0; i < 45; i++) {
+            for (let i = 0; i < 42; i++) {
                 bgStars.push({
                     x: Math.random() * canvas.width,
-                    y: Math.random() * (groundY - 75),
-                    r: Math.random() * 1.8 + 0.6,
-                    alpha: Math.random() * 0.7 + 0.3,
-                    speed: Math.random() * 16 + 8
+                    y: Math.random() * (groundY - 30),
+                    r: 1 + Math.random() * 1.8,
+                    alpha: 0.3 + Math.random() * 0.7,
+                    speed: 12 + Math.random() * 28
                 });
             }
-
             bgBuildings = [];
             let bx = 0;
-            while (bx < canvas.width + 300) {
-                const bw = 55 + Math.random() * 65;
-                const bh = 55 + Math.random() * 125;
-                bgBuildings.push({
-                    x: bx,
-                    w: bw,
-                    h: bh,
-                    type: Math.random() > 0.65 ? 'alien_monolith' : 'bellwood'
-                });
-                bx += bw + 15 + Math.random() * 35;
+            while (bx < canvas.width + 220) {
+                const bw = 42 + Math.random() * 48;
+                const bh = 45 + Math.random() * 110;
+                bgBuildings.push({ x: bx, w: bw, h: bh });
+                bx += bw + 18 + Math.random() * 30;
             }
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        /********************************************************************
-         * 5. OMNITRIX ALIEN HOT-SWAP, EVOLUTION & SPECIAL POWERS
-         ********************************************************************/
-        function selectAlien(alienKey, announce = true) {
-            if (!ALIEN_ROSTER[alienKey]) return;
-            const cfg = ALIEN_ROSTER[alienKey];
-
-            if (!isAlienUnlocked(alienKey)) {
-                if (announce) {
-                    const reqText = cfg.isSecret
-                        ? "LOCKED! TYPE SECRET CODE 'RRR' TO UNLOCK UPCHUCK!"
-                        : `LOCKED! REACH LEVEL ${cfg.unlockLevel} TO UNLOCK ${cfg.name}!`;
-                    spawnFloatingText(player.x + 15, Math.max(45, player.y - 15), reqText, "#fbbf24", 14);
-                }
-                return;
-            }
-
-            const prevH = player.height;
-            currentAlienKey = alienKey;
-            try { localStorage.setItem('ben10_selected_alien', alienKey); } catch (e) {}
-
-            player.width = isUltimate ? cfg.ultWidth : cfg.width;
-            player.normalHeight = isUltimate ? cfg.ultHeight : cfg.normalHeight;
-            player.duckHeight = cfg.duckHeight;
-            player.maxJumps = cfg.maxJumps;
-            player.height = player.isDucking ? player.duckHeight : player.normalHeight;
+        function resizeCanvas() {
+            const wrapper = document.getElementById('canvasWrapper');
+            const rect = wrapper ? wrapper.getBoundingClientRect() : { width: 800, height: 350 };
+            const logicalHeight = 350;
+            const aspect = Math.max(1.55, (rect.width || 800) / Math.max(180, rect.height || 350));
+            canvas.height = logicalHeight;
+            canvas.width = Math.max(600, Math.round(logicalHeight * aspect));
+            groundY = canvas.height - 46;
 
             if (player.isGrounded) {
                 player.y = groundY - player.height;
             } else {
-                player.y += (prevH - player.height);
+                player.y = Math.min(player.y, groundY - player.height);
+            }
+            initBackground();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function selectAlien(alienKey, playFx = true) {
+            if (!ALIEN_ROSTER[alienKey]) return;
+            if (!isAlienUnlocked(alienKey)) {
+                const lockedCfg = ALIEN_ROSTER[alienKey];
+                const msg = lockedCfg.isSecret
+                    ? "ENTER SECRET CODE 'RRR' FOR UPCHUCK!"
+                    : `UNLOCKS AT LEVEL ${lockedCfg.unlockLevel}!`;
+                spawnFloatingText(player.x + 10, Math.max(40, player.y - 18), msg, '#f87171', 14);
+                return;
             }
 
-            if (announce) {
+            currentAlienKey = alienKey;
+            const cfg = ALIEN_ROSTER[currentAlienKey];
+            const prevBottom = player.y + player.height;
+
+            player.width = cfg.width;
+            player.normalHeight = cfg.normalHeight;
+            player.duckHeight = cfg.duckHeight;
+            player.height = player.isDucking ? player.duckHeight : player.normalHeight;
+            player.maxJumps = cfg.maxJumps;
+            player.y = player.isGrounded ? (groundY - player.height) : (prevBottom - player.height);
+
+            if (playFx) {
                 audio.init();
                 audio.playOmnitrixDialSwap();
-                evolutionFlashTimer = 0.55;
-                player.invulnerableTimer = Math.max(player.invulnerableTimer, 0.6);
-
-                for (let i = 0; i < 20; i++) {
-                    const angle = (Math.PI * 2 * i) / 20;
-                    particles.push({
-                        x: player.x + player.width / 2,
-                        y: player.y + player.height / 2,
-                        vx: Math.cos(angle) * (120 + Math.random() * 140),
-                        vy: Math.sin(angle) * (120 + Math.random() * 140),
-                        size: 4 + Math.random() * 4,
-                        color: i % 2 === 0 ? '#22c55e' : cfg.accentColor,
-                        life: 0.45,
-                        maxLife: 0.45
-                    });
-                }
-
-                const title = isUltimate ? cfg.ultimateName : cfg.name;
-                spawnFloatingText(player.x + 25, Math.max(40, player.y - 16), `${title}!`, cfg.accentColor, 17);
+                evolutionFlashTimer = 0.45;
+                spawnExplosion(player.x + player.width / 2, player.y + player.height / 2, '#22c55e', 14);
+                spawnFloatingText(player.x + 10, Math.max(38, player.y - 20), `${isUltimate ? cfg.ultimateName : cfg.name}!`, cfg.accentColor, 15);
             }
-
             updateHUD();
         }
 
         function cycleAlienRoster() {
-            const unlockedList = ALIEN_KEYS.filter(k => isAlienUnlocked(k));
-            if (unlockedList.length === 0) return;
-            const idx = unlockedList.indexOf(currentAlienKey);
-            const nextIdx = (idx + 1) % unlockedList.length;
-            selectAlien(unlockedList[nextIdx], true);
+            audio.init();
+            const unlockedKeys = ALIEN_KEYS.filter(k => isAlienUnlocked(k));
+            if (unlockedKeys.length === 0) return;
+            const curIdx = unlockedKeys.indexOf(currentAlienKey);
+            const nextKey = unlockedKeys[(curIdx + 1) % unlockedKeys.length];
+            selectAlien(nextKey, true);
         }
 
-        function triggerUltimateEvolution(forceState = null) {
-            const effectiveLvl = Math.max(currentLevel, maxUnlockedLevel);
-            if (forceState === null && effectiveLvl < 7) {
-                spawnFloatingText(player.x + 20, Math.max(45, player.y - 16), "ULTIMATE FORMS UNLOCK AFTER LEVEL 6 (LVL 7+)!", "#fbbf24", 14);
+        function triggerUltimateEvolution(forceEvolve = false) {
+            audio.init();
+            if (!forceEvolve && isUltimate) {
+                isUltimate = false;
+                audio.syncAutoForm(false);
+                audio.playOmnitrixDialSwap();
+                updateHUD();
                 return;
             }
-            const targetState = forceState !== null ? forceState : !isUltimate;
-            isUltimate = targetState;
-            evolutionFlashTimer = 1.05;
-            screenShake = 14;
-            player.invulnerableTimer = 1.5;
+            isUltimate = true;
+            evolutionProgress = 100;
+            evolutionFlashTimer = 0.85;
+            screenShake = 11;
+            missileAmmo = MAX_MISSILES;
+            player.invulnerableTimer = Math.max(player.invulnerableTimer, 1.0);
+            audio.syncAutoForm(true);
             audio.playEvolution();
-            audio.syncAutoForm(isUltimate);
 
             const cfg = ALIEN_ROSTER[currentAlienKey];
-
-            if (isUltimate) {
-                evolutionProgress = 100;
-                missileAmmo = MAX_MISSILES;
-                missileRechargeTimer = 0;
-                player.normalHeight = cfg.ultHeight;
-                player.width = cfg.ultWidth;
-
-                obstacles.forEach(obs => {
-                    if (obs.x < canvas.width * 0.75) {
-                        spawnExplosion(obs.x + obs.w / 2, obs.y + obs.h / 2, '#22c55e', 18);
-                        obs.destroyed = true;
-                    }
-                });
-                obstacles = obstacles.filter(o => !o.destroyed);
-
-                spawnFloatingText(player.x + 30, Math.max(40, player.y - 20), `${cfg.ultimateName}!`, "#4ade80", 19);
-            } else {
-                player.normalHeight = cfg.normalHeight;
-                player.width = cfg.width;
-                spawnFloatingText(player.x + 30, Math.max(40, player.y - 20), `${cfg.name} FORM`, "#facc15", 16);
-            }
-
-            player.height = player.isDucking ? player.duckHeight : player.normalHeight;
-            if (player.isGrounded) player.y = groundY - player.height;
-
-            for (let i = 0; i < 30; i++) {
-                const angle = (Math.PI * 2 * i) / 30;
-                particles.push({
-                    x: player.x + player.width / 2,
-                    y: player.y + player.height / 2,
-                    vx: Math.cos(angle) * (150 + Math.random() * 180),
-                    vy: Math.sin(angle) * (150 + Math.random() * 180),
-                    size: 5 + Math.random() * 5,
-                    color: i % 2 === 0 ? '#22c55e' : '#a3e635',
-                    life: 0.7,
-                    maxLife: 0.7
-                });
-            }
-
+            spawnExplosion(player.x + player.width / 2, player.y + player.height / 2, '#a3e635', 22);
+            spawnFloatingText(player.x + 10, Math.max(38, player.y - 24), `${cfg.ultimateName}!`, '#a3e635', 16);
             updateHUD();
         }
 
-        function triggerAlienSpecial() {
-            if (gameState !== 'PLAYING') return;
-
-            const cannonX = player.x + player.width + 2;
-            const cannonY = player.y + player.height * 0.42;
-
-            // SPECIAL CASE: UPCHUCK (SECRET CODE 'RRR') — TONGUE GRAB & ACID SPIT!
-            if (currentAlienKey === 'upchuck') {
-                // Find closest obstacle ahead within tongue range
-                let targetObsIdx = -1;
-                let minDist = 460;
-                for (let i = 0; i < obstacles.length; i++) {
-                    const obs = obstacles[i];
-                    const dist = obs.x - (player.x + player.width);
-                    if (dist >= -15 && dist < minDist) {
-                        minDist = dist;
-                        targetObsIdx = i;
-                    }
-                }
-
-                // If an obstacle is in tongue range and either belly is empty or close by, grab it with tongue!
-                if (targetObsIdx !== -1 && (upchuckSwallowedCount === 0 || minDist < 280)) {
-                    const grabbed = obstacles[targetObsIdx];
-                    audio.playTongueGrab();
-                    screenShake = 6;
-                    activeTongueGrab = {
-                        targetX: grabbed.x + grabbed.w / 2,
-                        targetY: grabbed.y + grabbed.h / 2,
-                        timer: 0.24,
-                        maxTimer: 0.24,
-                        w: grabbed.w,
-                        h: grabbed.h
-                    };
-                    obstacles.splice(targetObsIdx, 1);
-                    upchuckSwallowedCount = Math.min(3, upchuckSwallowedCount + 1);
-                    missileAmmo = Math.min(MAX_MISSILES, missileAmmo + 1);
-                    bonusScore += 40;
-                    spawnExplosion(activeTongueGrab.targetX, activeTongueGrab.targetY, '#a3e635', 14);
-                    spawnFloatingText(player.x + 25, player.y - 16, `TONGUE GULP +40! (BELLY: ${upchuckSwallowedCount})`, "#a3e635", 15);
-
-                    // If there are STILL more obstructions ahead, immediately spit an explosive loogie at them too!
-                    if (obstacles.length > 0 && upchuckSwallowedCount > 0) {
-                        upchuckSwallowedCount--;
-                        missiles.push({
-                            x: cannonX,
-                            y: cannonY - 4,
-                            vx: currentSpeed + 680,
-                            w: 34,
-                            h: 26,
-                            kind: 'upchuck_spit',
-                            color: '#a3e635',
-                            pierce: 3,
-                            trailTimer: 0
-                        });
-                    }
-                    updateHUD();
-                    return;
-                }
-
-                // Otherwise spit the swallowed obstacle matter as a high-explosive Gourmand plasma ball!
-                if (upchuckSwallowedCount > 0 || missileAmmo > 0) {
-                    if (upchuckSwallowedCount > 0) upchuckSwallowedCount--;
-                    else missileAmmo--;
-
-                    audio.playSpecialAttack('missile');
-                    shootRecoilTimer = 0.24;
-                    screenShake = 8;
-                    missiles.push({
-                        x: cannonX,
-                        y: cannonY - 6,
-                        vx: currentSpeed + 700,
-                        w: 36,
-                        h: 28,
-                        kind: 'upchuck_spit',
-                        color: '#a3e635',
-                        pierce: 3,
-                        trailTimer: 0
-                    });
-                    spawnFloatingText(player.x + 25, player.y - 14, "GOURMAND ACID SPIT!", "#bef264", 15);
-                    updateHUD();
-                    return;
-                }
-            }
-
-            if (missileAmmo <= 0) {
-                spawnFloatingText(player.x + 30, player.y - 10, "RECHARGING OMNITRIX ENERGY...", "#fbbf24", 13);
+        function handleJump() {
+            audio.init();
+            if (gameState !== 'PLAYING') {
+                startGame();
                 return;
             }
-
-            missileAmmo--;
-            shootRecoilTimer = 0.24;
-
-            if (currentAlienKey === 'humungousaur') {
-                audio.playSpecialAttack('missile');
-                screenShake = isUltimate ? 7 : 5;
-                missiles.push({
-                    x: cannonX,
-                    y: cannonY,
-                    vx: currentSpeed + 540,
-                    w: isUltimate ? 32 : 26,
-                    h: isUltimate ? 14 : 22,
-                    kind: isUltimate ? 'bio_missile' : 'sonic_wave',
-                    color: isUltimate ? '#4ade80' : '#f59e0b',
-                    pierce: isUltimate ? 2 : 1,
-                    trailTimer: 0
-                });
-            } else if (currentAlienKey === 'jetray') {
-                audio.playSpecialAttack('laser');
-                screenShake = 4;
-                missiles.push({
-                    x: cannonX,
-                    y: player.y + 18,
-                    vx: currentSpeed + 820,
-                    w: 48,
-                    h: isUltimate ? 12 : 8,
-                    kind: 'neuro_laser',
-                    color: isUltimate ? '#22d3ee' : '#4ade80',
-                    pierce: isUltimate ? 3 : 2,
-                    trailTimer: 0
-                });
-            } else if (currentAlienKey === 'cannonbolt') {
-                audio.playSpecialAttack('cannonbolt');
-                screenShake = 8;
-                player.specialDashTimer = isUltimate ? 2.2 : 1.55;
-                player.invulnerableTimer = Math.max(player.invulnerableTimer, player.specialDashTimer);
-                spawnFloatingText(player.x + 20, player.y - 14, isUltimate ? "ULTIMATE SPIKE ROLL!" : "CANNONBOLT ROLL!", "#fbbf24", 16);
-            } else if (currentAlienKey === 'xlr8') {
-                audio.playSpecialAttack('xlr8');
-                screenShake = 6;
-                player.specialDashTimer = isUltimate ? 1.9 : 1.35;
-                player.invulnerableTimer = Math.max(player.invulnerableTimer, player.specialDashTimer);
-                missiles.push({
-                    x: cannonX,
-                    y: player.y + 10,
-                    vx: currentSpeed + 680,
-                    w: 44,
-                    h: 56,
-                    kind: 'tornado_blitz',
-                    color: '#38bdf8',
-                    pierce: 3,
-                    trailTimer: 0
-                });
-                spawnFloatingText(player.x + 20, player.y - 14, "KINECELERAN TORNADO BLITZ!", "#38bdf8", 16);
-            } else if (currentAlienKey === 'swampfire') {
-                audio.playSpecialAttack('missile');
-                screenShake = 6;
-                missiles.push({
-                    x: cannonX,
-                    y: cannonY,
-                    vx: currentSpeed + 520,
-                    w: isUltimate ? 34 : 26,
-                    h: isUltimate ? 26 : 20,
-                    kind: isUltimate ? 'blue_napalm' : 'methane_fire',
-                    color: isUltimate ? '#38bdf8' : '#f97316',
-                    pierce: isUltimate ? 3 : 1,
-                    trailTimer: 0
-                });
-            } else if (currentAlienKey === 'bigchill') {
-                audio.playSpecialAttack('cryo');
-                player.phaseTimer = isUltimate ? 1.8 : 1.1;
-                missiles.push({
-                    x: cannonX,
-                    y: cannonY - 6,
-                    vx: currentSpeed + 600,
-                    w: 42,
-                    h: 24,
-                    kind: isUltimate ? 'frostfire_beam' : 'cryo_beam',
-                    color: isUltimate ? '#f43f5e' : '#38bdf8',
-                    pierce: 2,
-                    trailTimer: 0
-                });
-                spawnFloatingText(player.x + 20, player.y - 14, isUltimate ? "ULTIMATE FROSTFIRE!" : "ABSOLUTE ZERO BEAM!", isUltimate ? "#fb7185" : "#38bdf8", 15);
-            } else if (currentAlienKey === 'greymatter') {
-                audio.playSpecialAttack('laser');
-                screenShake = 4;
-                missiles.push({
-                    x: cannonX,
-                    y: player.y + 14,
-                    vx: currentSpeed + 860,
-                    w: 54,
-                    h: 12,
-                    kind: 'neuro_laser',
-                    color: '#34d399',
-                    pierce: 3,
-                    trailTimer: 0
-                });
-                spawnFloatingText(player.x + 15, player.y - 14, "GALVAN NEURO-DISRUPTOR!", "#34d399", 15);
-            } else if (currentAlienKey === 'fourarms') {
-                audio.playSlamShockwave();
-                screenShake = 11;
-                missiles.push({
-                    x: cannonX,
-                    y: player.y + 8,
-                    vx: currentSpeed + 620,
-                    w: 48,
-                    h: 64,
-                    kind: 'sonic_wave',
-                    color: '#f87171',
-                    pierce: 4,
-                    trailTimer: 0
-                });
-                spawnFloatingText(player.x + 20, player.y - 14, "TETRAMAND QUAD SONIC BOOM!", "#f87171", 16);
-            } else if (currentAlienKey === 'waybig') {
-                audio.playSpecialAttack('laser');
-                screenShake = 12;
-                missiles.push({
-                    x: cannonX,
-                    y: player.y + 12,
-                    vx: currentSpeed + 900,
-                    w: 75,
-                    h: 28,
-                    kind: 'neuro_laser',
-                    color: '#22d3ee',
-                    pierce: 6,
-                    trailTimer: 0
-                });
-                spawnFloatingText(player.x + 20, player.y - 16, "TO'KUSTAR COSMIC RAY!", "#22d3ee", 17);
+            if (player.isDucking) {
+                setDucking(false);
             }
+            if (player.isGrounded || player.jumpCount < player.maxJumps) {
+                player.vy = player.jumpCount === 0 ? -650 : -575;
+                player.isGrounded = false;
+                player.jumpCount++;
+                audio.playJump();
+                spawnStompDust(player.x + player.width / 2, player.y + player.height, 6);
+            }
+        }
 
-            updateHUD();
+        function setDucking(duckState) {
+            if (gameState !== 'PLAYING') return;
+            if (duckState && !player.isGrounded && !player.isSlamming) {
+                player.vy = 980;
+                player.isSlamming = true;
+            }
+            if (duckState && !player.isDucking) {
+                player.isDucking = true;
+                player.height = player.duckHeight;
+                if (player.isGrounded) player.y = groundY - player.height;
+            } else if (!duckState && player.isDucking) {
+                player.isDucking = false;
+                player.height = player.normalHeight;
+                if (player.isGrounded) player.y = groundY - player.height;
+            }
         }
 
         function triggerGroundSlamImpact() {
-            audio.playSlamShockwave();
-            screenShake = isUltimate ? 14 : 9;
-            spawnStompDust(player.x + player.width / 2, groundY, 20);
-
-            const slamRadius = isUltimate ? 255 : 185;
+            const cfg = ALIEN_ROSTER[currentAlienKey];
+            audio.playStomp(true);
+            screenShake = 10;
+            spawnStompDust(player.x + player.width / 2, groundY, 16);
             shockwaves.push({
                 x: player.x + player.width / 2,
                 y: groundY,
-                r: 20,
-                maxR: slamRadius,
-                color: isUltimate ? '#4ade80' : '#f59e0b',
-                alpha: 1.0
+                r: 16,
+                maxR: isUltimate ? 230 : 170,
+                alpha: 1,
+                color: cfg.accentColor
             });
 
-            obstacles.forEach(obs => {
-                const dist = (obs.x + obs.w / 2) - (player.x + player.width / 2);
-                if (dist > -35 && dist < slamRadius && obs.y + obs.h >= groundY - 18) {
-                    obs.destroyed = true;
+            // Shatter nearby ground obstacles on seismic slam
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                if (Math.abs((obs.x + obs.w / 2) - (player.x + player.width / 2)) < (isUltimate ? 220 : 165)) {
                     bonusScore += 25;
-                    spawnExplosion(obs.x + obs.w / 2, obs.y + obs.h / 2, '#f59e0b', 18);
-                    spawnFloatingText(obs.x, obs.y - 12, "SEISMIC SLAM +25!", "#fbbf24", 15);
+                    spawnExplosion(obs.x + obs.w / 2, obs.y + obs.h / 2, cfg.accentColor, 16);
+                    spawnFloatingText(obs.x, obs.y - 12, "SLAM SHATTER +25!", cfg.accentColor, 14);
+                    obstacles.splice(i, 1);
                 }
-            });
-            obstacles = obstacles.filter(o => !o.destroyed);
+            }
         }
 
-        /********************************************************************
-         * 6. PLAYER ACTIONS (JUMP, GLIDE, TRIPLE JUMP, DUCK, SLAM, PHASE)
-         ********************************************************************/
-        function handleJump() {
+        function triggerAlienSpecial() {
             audio.init();
             if (gameState !== 'PLAYING') {
                 startGame();
@@ -2196,152 +1582,178 @@
 
             const cfg = ALIEN_ROSTER[currentAlienKey];
 
-            if (player.isGrounded) {
-                player.vy = -cfg.jumpForce;
-                player.isGrounded = false;
-                player.isSlamming = false;
-                player.jumpCount = 1;
-                player.isDucking = false;
-                player.height = player.normalHeight;
-                audio.playJump(1);
-                spawnStompDust(player.x + 30, groundY, 10);
-            } else if (player.jumpCount < player.maxJumps) {
-                player.vy = -cfg.jumpForce * 0.91;
-                player.jumpCount++;
-                player.isSlamming = false;
-                player.isDucking = false;
-                player.height = player.normalHeight;
-                audio.playJump(player.jumpCount);
-                spawnExplosion(player.x + player.width / 2, player.y + player.height, cfg.accentColor, 12);
-            }
-        }
-
-        function setDucking(state) {
-            if (gameState !== 'PLAYING') return;
-
-            if (state) {
-                if (!player.isDucking) {
-                    player.isDucking = true;
-                    const oldH = player.height;
-                    player.height = player.duckHeight;
-                    if (player.isGrounded) {
-                        player.y += (oldH - player.height);
-                        // Big Chill enters brief Cryo-Phase when crouching
-                        if (currentAlienKey === 'bigchill') {
-                            player.phaseTimer = Math.max(player.phaseTimer, 0.65);
-                        }
-                    } else {
-                        // Mid-air Slam / Dive!
-                        player.vy = Math.max(player.vy, 920);
-                        player.isSlamming = true;
-                    }
-                }
-            } else {
-                if (player.isDucking) {
-                    player.isDucking = false;
-                    player.height = player.normalHeight;
-                    if (player.isGrounded) {
-                        player.y = groundY - player.height;
-                    }
+            // Special Case: UPCHUCK (Secret Code 'RRR') — Tongue Grab Obstacle & Spit Explosive Acid!
+            if (currentAlienKey === 'upchuck') {
+                const grabTargetIdx = obstacles.findIndex(o => o.x > player.x && o.x < player.x + 390);
+                if (grabTargetIdx !== -1 && upchuckSwallowedCount < 3) {
+                    const targetObs = obstacles[grabTargetIdx];
+                    activeTongueGrab = {
+                        targetX: targetObs.x + targetObs.w / 2,
+                        targetY: targetObs.y + targetObs.h / 2,
+                        timer: 0.24,
+                        maxTimer: 0.24
+                    };
+                    upchuckSwallowedCount++;
+                    bonusScore += 40;
+                    audio.playTongueGrab();
+                    spawnExplosion(targetObs.x + targetObs.w / 2, targetObs.y + targetObs.h / 2, '#a3e635', 16);
+                    spawnFloatingText(targetObs.x, targetObs.y - 12, "TONGUE GULP +40!", "#a3e635", 15);
+                    obstacles.splice(grabTargetIdx, 1);
+                    updateHUD();
+                    return;
+                } else if (upchuckSwallowedCount > 0 || missileAmmo > 0) {
+                    if (upchuckSwallowedCount > 0) upchuckSwallowedCount--;
+                    else missileAmmo--;
+                    audio.playShoot();
+                    shootRecoilTimer = 0.16;
+                    missiles.push({
+                        x: player.x + player.width - 4,
+                        y: player.y + 18,
+                        w: 28,
+                        h: 22,
+                        vx: 780,
+                        kind: 'upchuck_spit',
+                        color: '#a3e635',
+                        pierce: isUltimate ? 3 : 2,
+                        trailTimer: 0
+                    });
+                    spawnFloatingText(player.x + 20, player.y - 12, "GOURMAND ACID SPIT!", "#bef264", 14);
+                    updateHUD();
+                    return;
                 }
             }
-        }
 
-        /********************************************************************
-         * 7. OBSTACLE & COLLECTIBLE SPAWNERS
-         ********************************************************************/
-        function spawnObstacle() {
-            const roll = Math.random();
-            let obs = {
-                x: canvas.width + 40,
-                y: 0,
-                w: 44,
-                h: 54,
-                type: 'vilgax_spikes',
-                frame: 0
-            };
-
-            if (roll < 0.34) {
-                const cluster = Math.random() > 0.45 ? 2 : 1;
-                obs.type = 'vilgax_spikes';
-                obs.w = cluster === 2 ? 68 : 44;
-                obs.h = cluster === 2 ? 56 : 48;
-                obs.y = groundY - obs.h;
-            } else if (roll < 0.58) {
-                obs.type = 'knight_barrier';
-                obs.w = 38;
-                obs.h = 74;
-                obs.y = groundY - obs.h;
-            } else if (roll < 0.74) {
-                obs.type = 'dnalien_pod';
-                obs.w = 50;
-                obs.h = 46;
-                obs.y = groundY - obs.h;
-            } else {
-                obs.type = 'vilgax_drone';
-                obs.w = 58;
-                obs.h = 38;
-                const highDrone = Math.random() > 0.42;
-                obs.y = highDrone ? (groundY - 96) : (groundY - 62);
-                obs.baseY = obs.y;
+            if (missileAmmo <= 0) {
+                spawnFloatingText(player.x + 10, player.y - 12, "RECHARGING ENERGY...", "#94a3b8", 13);
+                return;
             }
 
-            obstacles.push(obs);
-        }
+            missileAmmo--;
+            shootRecoilTimer = 0.16;
+            audio.playShoot();
 
-        function spawnCollectible() {
-            const isSmoothy = Math.random() > 0.72;
-            const heights = [groundY - 45, groundY - 105, groundY - 145];
-            const cy = heights[Math.floor(Math.random() * heights.length)];
+            if (currentAlienKey === 'xlr8' || currentAlienKey === 'cannonbolt') {
+                player.specialDashTimer = isUltimate ? 1.15 : 0.85;
+                player.invulnerableTimer = Math.max(player.invulnerableTimer, player.specialDashTimer);
+                spawnFloatingText(player.x + 15, player.y - 15, `${cfg.specialName}!`, cfg.accentColor, 15);
+            } else if (currentAlienKey === 'bigchill') {
+                player.phaseTimer = isUltimate ? 1.5 : 1.1;
+            }
 
-            collectibles.push({
-                x: canvas.width + 40,
-                y: cy,
-                baseY: cy,
-                w: 32,
-                h: 32,
-                type: isSmoothy ? 'smoothy' : 'orb',
-                angle: 0
+            const projKind = currentAlienKey === 'jetray'
+                ? 'neuro_laser'
+                : (currentAlienKey === 'swampfire' ? (isUltimate ? 'blue_napalm' : 'methane_fire') : 'bio_missile');
+
+            missiles.push({
+                x: player.x + player.width - 6,
+                y: player.y + player.height * 0.36,
+                w: projKind === 'neuro_laser' ? 34 : 24,
+                h: projKind === 'neuro_laser' ? 8 : 16,
+                vx: 760,
+                kind: projKind,
+                color: isUltimate ? '#a3e635' : cfg.accentColor,
+                pierce: isUltimate ? 2 : 1,
+                trailTimer: 0
             });
+            updateHUD();
         }
 
-        function spawnStompDust(x, y, count = 6) {
-            const cfg = ALIEN_ROSTER[currentAlienKey];
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x: x + (Math.random() - 0.5) * 24,
-                    y: y - 2,
-                    vx: -currentSpeed * 0.35 + (Math.random() - 0.5) * 90,
-                    vy: -Math.random() * 85 - 20,
-                    size: 4 + Math.random() * 5,
-                    color: isUltimate ? '#34d399' : cfg.accentColor,
-                    life: 0.35 + Math.random() * 0.2,
-                    maxLife: 0.55
+        function spawnObstacle() {
+            const types = ['vilgax_spikes', 'knight_barrier', 'dnalien_pod', 'vilgax_drone'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            if (type === 'vilgax_drone') {
+                const flyHeights = [groundY - 96, groundY - 68, groundY - 125];
+                const by = flyHeights[Math.floor(Math.random() * flyHeights.length)];
+                obstacles.push({
+                    type,
+                    x: canvas.width + 40,
+                    y: by,
+                    baseY: by,
+                    w: 54,
+                    h: 34,
+                    frame: Math.random() * 6
+                });
+            } else if (type === 'knight_barrier') {
+                obstacles.push({
+                    type,
+                    x: canvas.width + 40,
+                    y: groundY - 70,
+                    w: 36,
+                    h: 70,
+                    frame: 0
+                });
+            } else if (type === 'dnalien_pod') {
+                obstacles.push({
+                    type,
+                    x: canvas.width + 40,
+                    y: groundY - 46,
+                    w: 52,
+                    h: 46,
+                    frame: 0
+                });
+            } else {
+                const wide = Math.random() > 0.45;
+                obstacles.push({
+                    type: 'vilgax_spikes',
+                    x: canvas.width + 40,
+                    y: groundY - 44,
+                    w: wide ? 64 : 44,
+                    h: 44,
+                    frame: 0
                 });
             }
         }
 
-        function spawnExplosion(x, y, color = '#ef4444', count = 16) {
+        function spawnCollectible() {
+            const isSmoothy = Math.random() < 0.24;
+            const by = groundY - (62 + Math.random() * 75);
+            collectibles.push({
+                type: isSmoothy ? 'smoothy' : 'orb',
+                x: canvas.width + 40,
+                y: by,
+                baseY: by,
+                w: 30,
+                h: 30,
+                angle: Math.random() * Math.PI * 2
+            });
+        }
+
+        function spawnExplosion(x, y, color = '#4ade80', count = 16) {
             for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const spd = 60 + Math.random() * 220;
+                const spd = 45 + Math.random() * 210;
                 particles.push({
                     x,
                     y,
                     vx: Math.cos(angle) * spd,
                     vy: Math.sin(angle) * spd,
-                    size: 4 + Math.random() * 6,
-                    color: i % 3 === 0 ? '#facc15' : color,
-                    life: 0.45 + Math.random() * 0.25,
-                    maxLife: 0.7
+                    size: 2.5 + Math.random() * 4,
+                    color,
+                    life: 0.25 + Math.random() * 0.28,
+                    maxLife: 0.5
+                });
+            }
+        }
+
+        function spawnStompDust(x, y, count = 6) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x + (Math.random() - 0.5) * 24,
+                    y: y - 2,
+                    vx: -40 - Math.random() * 90,
+                    vy: -15 - Math.random() * 55,
+                    size: 2.5 + Math.random() * 3,
+                    color: '#94a3b8',
+                    life: 0.22 + Math.random() * 0.16,
+                    maxLife: 0.38
                 });
             }
         }
 
         function spawnFloatingText(x, y, text, color = '#4ade80', size = 15) {
             floatingTexts.push({
-                x,
-                y,
+                x: Math.max(16, Math.min(canvas.width - 220, x)),
+                y: Math.max(28, y),
                 text,
                 color,
                 size,
@@ -2351,7 +1763,7 @@
         }
 
         /********************************************************************
-         * 8. HUD & REAL-TIME FREQUENCY VISUALIZER UPDATER
+         * 8. HUD UPDATER
          ********************************************************************/
         function updateHUD() {
             const cfg = ALIEN_ROSTER[currentAlienKey];
@@ -2362,14 +1774,16 @@
                 highScore = score;
                 highScoreDisplay.textContent = String(highScore).padStart(5, '0');
             }
-            speedDisplay.textContent = (speedMultiplier * cfg.speedFactor).toFixed(1) + 'x';
+            if (speedDisplay) speedDisplay.textContent = (speedMultiplier * cfg.speedFactor).toFixed(1) + 'x';
             if (levelDisplay) levelDisplay.textContent = String(currentLevel);
             if (levelBadgeTag) levelBadgeTag.textContent = `LVL ${currentLevel}`;
-            if (arenaBadgeTag) arenaBadgeTag.textContent = `ARENA: ${arena.name}`;
+            if (arenaBadgeTag) arenaBadgeTag.textContent = arena.name;
 
-            passiveTraitTag.textContent = currentAlienKey === 'upchuck'
-                ? `BELLY: ${upchuckSwallowedCount} SWALLOWED`
-                : cfg.passiveLabel;
+            if (passiveTraitTag) {
+                passiveTraitTag.textContent = currentAlienKey === 'upchuck'
+                    ? `BELLY: ${upchuckSwallowedCount} SWALLOWED`
+                    : cfg.passiveLabel;
+            }
 
             // Update 10-Alien Roster Cards (Unlock states & Active state)
             document.querySelectorAll('.alien-card').forEach(btn => {
@@ -2384,12 +1798,17 @@
                 } else {
                     btn.classList.add('locked');
                     if (statusEl && aCfg) {
-                        statusEl.textContent = aCfg.isSecret ? "Code: 'RRR'" : `Unlock @ Lvl ${aCfg.unlockLevel}`;
+                        statusEl.textContent = aCfg.isSecret ? "Code: RRR" : `Lvl ${aCfg.unlockLevel}`;
                     }
                 }
 
                 if (key === currentAlienKey) {
-                    btn.classList.add('active');
+                    if (!btn.classList.contains('active')) {
+                        btn.classList.add('active');
+                        try {
+                            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        } catch (e) {}
+                    }
                 } else {
                     btn.classList.remove('active');
                 }
@@ -2421,21 +1840,25 @@
             if (isUltimate) {
                 hudHeader.classList.add('ultimatrix-active-panel');
                 ultimatrixSpikes.classList.remove('opacity-0');
-                dnaStatusTag.textContent = cfg.ultimateSpecies;
-                dnaStatusTag.className = 'text-[10px] font-orbitron tracking-widest uppercase px-2 py-0.5 rounded bg-lime-400/20 text-lime-300 border border-lime-400/60';
+                if (dnaStatusTag) {
+                    dnaStatusTag.textContent = cfg.ultimateSpecies;
+                    dnaStatusTag.className = 'text-[10px] font-orbitron tracking-widest uppercase px-2 py-0.5 rounded bg-lime-400/20 text-lime-300 border border-lime-400/60';
+                }
                 formTitle.textContent = cfg.ultimateName;
-                formTitle.className = 'font-orbitron font-black text-sm sm:text-lg tracking-wider text-lime-300 drop-shadow-[0_0_12px_rgba(74,222,128,0.8)]';
+                formTitle.className = 'font-orbitron font-black text-xs sm:text-base tracking-wider text-lime-300 drop-shadow-[0_0_12px_rgba(74,222,128,0.8)]';
 
-                gaugeLabel.textContent = `LVL ${currentLevel} • ULTIMATE ACTIVE`;
-                gaugeValueText.textContent = `${levelProgressPct}% TO LVL ${currentLevel + 1}`;
+                gaugeLabel.textContent = `LVL ${currentLevel} • ULTIMATE`;
+                gaugeValueText.textContent = `${levelProgressPct}%`;
                 evolutionBar.style.width = `${levelProgressPct}%`;
             } else {
                 hudHeader.classList.remove('ultimatrix-active-panel');
                 ultimatrixSpikes.classList.add('opacity-0');
-                dnaStatusTag.textContent = cfg.species;
-                dnaStatusTag.className = 'text-[10px] font-orbitron tracking-widest uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                if (dnaStatusTag) {
+                    dnaStatusTag.textContent = cfg.species;
+                    dnaStatusTag.className = 'text-[10px] font-orbitron tracking-widest uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                }
                 formTitle.textContent = cfg.name;
-                formTitle.className = 'font-orbitron font-black text-sm sm:text-lg tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]';
+                formTitle.className = 'font-orbitron font-black text-xs sm:text-base tracking-wider text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]';
 
                 let nextReward = `LVL ${currentLevel + 1}`;
                 if (currentLevel === 1) nextReward = 'JETRAY @ L2';
@@ -2448,41 +1871,21 @@
                 else if (currentLevel < 15) nextReward = 'FOUR ARMS @ L15';
                 else if (currentLevel < 20) nextReward = 'WAY BIG @ L20';
 
-                gaugeLabel.textContent = `LEVEL ${currentLevel} PROGRESS`;
-                gaugeValueText.textContent = `${levelProgressPct}% (${nextReward})`;
+                gaugeLabel.textContent = `LVL ${currentLevel} (${nextReward})`;
+                gaugeValueText.textContent = `${levelProgressPct}%`;
                 evolutionBar.style.width = `${levelProgressPct}%`;
             }
 
-            specialAbilityLabel.innerHTML = `${cfg.specialName} <span class="text-emerald-400">[X/F]</span>:`;
+            specialAbilityLabel.innerHTML = `${cfg.specialName}:`;
             let pipsHTML = '';
             for (let i = 0; i < MAX_MISSILES; i++) {
                 if (i < missileAmmo) {
-                    pipsHTML += `<span class="w-5 h-2.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#22d3ee] border border-white/60 inline-block"></span>`;
+                    pipsHTML += `<span class="w-4 h-2 rounded-sm bg-cyan-400 shadow-[0_0_8px_#22d3ee] border border-white/60 inline-block"></span>`;
                 } else {
-                    pipsHTML += `<span class="w-5 h-2.5 rounded-sm bg-slate-800 border border-slate-600 inline-block"></span>`;
+                    pipsHTML += `<span class="w-4 h-2 rounded-sm bg-slate-800 border border-slate-600 inline-block"></span>`;
                 }
             }
             ammoPips.innerHTML = pipsHTML;
-        }
-
-        function drawMusicVisualizer() {
-            visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
-            const data = audio.getVisualizerData();
-            const bars = 16;
-            const barW = Math.floor(visCanvas.width / bars) - 1;
-
-            for (let i = 0; i < bars; i++) {
-                const val = audio.musicEnabled ? data[i] || 0 : 12;
-                const pct = Math.max(0.12, val / 255);
-                const h = Math.max(2, pct * visCanvas.height);
-                const x = i * (barW + 1);
-                const y = visCanvas.height - h;
-
-                visCtx.fillStyle = isUltimate
-                    ? (i % 2 === 0 ? '#a3e635' : '#22d3ee')
-                    : (i % 2 === 0 ? '#22c55e' : '#4ade80');
-                visCtx.fillRect(x, y, barW, h);
-            }
         }
 
         /********************************************************************
@@ -4120,15 +3523,9 @@
         }
 
         /********************************************************************
-         * 13. INPUT LISTENERS, ROSTER HOT-SWAPPING & MUSIC DECK CONTROLS
+         * 13. INPUT LISTENERS & CLEAN SOUND TOGGLE
          ********************************************************************/
-        const musicToggleBtn = document.getElementById('musicToggleBtn');
-        const musicBtnLabel = document.getElementById('musicBtnLabel');
-        const musicStatusDot = document.getElementById('musicStatusDot');
-        const sfxToggleBtn = document.getElementById('sfxToggleBtn');
-        const trackSelect = document.getElementById('trackSelect');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const mp3UploadInput = document.getElementById('mp3UploadInput');
+        const soundToggleBtn = document.getElementById('soundToggleBtn');
 
         // Bind Omnitrix Alien Roster Cards
         document.querySelectorAll('.alien-card').forEach(card => {
@@ -4152,11 +3549,7 @@
         }
         if (secretCodeBtn) {
             secretCodeBtn.addEventListener('click', () => {
-                if (secretCodeInput && secretCodeInput.value.trim().toUpperCase() === 'RRR') {
-                    unlockSecretRRR();
-                } else {
-                    unlockSecretRRR();
-                }
+                unlockSecretRRR();
             });
         }
         if (unlockAllBtn) {
@@ -4175,111 +3568,28 @@
             cycleAlienRoster();
         });
 
-        function updateMusicUI() {
-            if (audio.musicEnabled) {
-                musicBtnLabel.textContent = 'MUSIC: ON [M]';
-                musicStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
-                musicToggleBtn.className = 'px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 font-orbitron font-bold text-[10px] flex items-center gap-1.5 transition cursor-pointer';
-            } else {
-                musicBtnLabel.textContent = 'MUSIC: OFF [M]';
-                musicStatusDot.className = 'w-2 h-2 rounded-full bg-red-400';
-                musicToggleBtn.className = 'px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-red-500/40 text-red-300 font-orbitron font-bold text-[10px] flex items-center gap-1.5 transition cursor-pointer';
-            }
-        }
-
-        musicToggleBtn.addEventListener('click', () => {
-            audio.toggleMusic();
-            updateMusicUI();
-        });
-
-        sfxToggleBtn.addEventListener('click', () => {
-            const on = audio.toggleSfx();
-            sfxToggleBtn.textContent = on ? 'SFX: ON' : 'SFX: OFF';
-        });
-
-        trackSelect.addEventListener('change', (e) => {
-            audio.setTrackMode(e.target.value, isUltimate);
-            e.target.blur();
-        });
-
-        volumeSlider.addEventListener('input', (e) => {
-            audio.init();
-            audio.setVolume(parseFloat(e.target.value) / 100);
-        });
-
-        mp3UploadInput.addEventListener('change', (e) => {
-            const file = e.target.files && e.target.files[0];
-            if (file) {
-                audio.loadCustomMP3(file);
-                spawnFloatingText(player.x + 20, player.y - 10, "CUSTOM MP3 LOADED!", "#fbbf24", 15);
-            }
-        });
-
-        // 100% Standalone Offline HTML Downloader & Connectivity Monitor
-        function updateOfflineBadge() {
-            if (!offlineStatusBadge) return;
-            if (navigator.onLine === false) {
-                offlineStatusBadge.textContent = 'OFFLINE MODE ACTIVE';
-                offlineStatusBadge.className = 'text-[9px] font-orbitron tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-400/40';
-            } else {
-                offlineStatusBadge.textContent = 'OFFLINE READY';
-                offlineStatusBadge.className = 'text-[9px] font-orbitron tracking-wider uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-lime-300 border border-emerald-400/40';
-            }
-        }
-        window.addEventListener('online', updateOfflineBadge);
-        window.addEventListener('offline', updateOfflineBadge);
-        updateOfflineBadge();
-
-        function downloadOfflineGame() {
-            try {
-                const clone = document.documentElement.cloneNode(true);
-                const modalClone = clone.querySelector('#overlayModal');
-                if (modalClone) {
-                    modalClone.classList.remove('opacity-0', 'pointer-events-none');
+        function toggleAllSound() {
+            const isMusicOn = audio.toggleMusic();
+            audio.sfxEnabled = isMusicOn;
+            audio.updateVolumes();
+            if (soundToggleBtn) {
+                if (isMusicOn) {
+                    soundToggleBtn.textContent = 'SOUND: ON';
+                    soundToggleBtn.className = 'px-2 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-orbitron font-bold text-[9px] sm:text-[10px] cursor-pointer shrink-0';
+                } else {
+                    soundToggleBtn.textContent = 'SOUND: OFF';
+                    soundToggleBtn.className = 'px-2 py-1 rounded-lg bg-slate-900 border border-red-500/40 text-red-300 font-orbitron font-bold text-[9px] sm:text-[10px] cursor-pointer shrink-0';
                 }
-                const htmlContent = '<!DOCTYPE html>\n' + clone.outerHTML;
-                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'Ben10_Omnitrix_Runner_Offline.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 1500);
-                spawnFloatingText(player.x + 15, Math.max(45, player.y - 15), "OFFLINE .HTML DOWNLOADED!", "#a3e635", 15);
-            } catch (err) {
-                spawnFloatingText(player.x + 15, Math.max(45, player.y - 15), "PRESS CTRL+S TO SAVE OFFLINE", "#fbbf24", 14);
             }
         }
 
-        const downloadOfflineBtn = document.getElementById('downloadOfflineBtn');
-        if (downloadOfflineBtn) {
-            downloadOfflineBtn.addEventListener('click', downloadOfflineGame);
+        if (soundToggleBtn) {
+            soundToggleBtn.addEventListener('click', toggleAllSound);
         }
 
-        // Self-Contained Inline Service Worker Registration for Offline Caching (when served over HTTP/HTTPS)
-        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
-            try {
-                const swCode = `
-                    const CACHE_NAME = 'ben10-omnitrix-offline-v1';
-                    self.addEventListener('install', e => {
-                        self.skipWaiting();
-                    });
-                    self.addEventListener('activate', e => {
-                        e.waitUntil(self.clients.claim());
-                    });
-                    self.addEventListener('fetch', e => {
-                        e.respondWith(
-                            caches.match(e.request).then(cached => cached || fetch(e.request))
-                        );
-                    });
-                `;
-                const swBlob = new Blob([swCode], { type: 'application/javascript' });
-                const swUrl = URL.createObjectURL(swBlob);
-                navigator.serviceWorker.register(swUrl).catch(() => {});
-            } catch (e) {}
-        }
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeCanvas, 120);
+        });
 
         window.addEventListener('keydown', (e) => {
             // Ignore shortcuts when typing inside the Secret Code input box
@@ -4331,8 +3641,7 @@
                 }
             } else if (e.code === 'KeyM') {
                 if (!e.repeat) {
-                    audio.toggleMusic();
-                    updateMusicUI();
+                    toggleAllSound();
                 }
             } else if (['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].includes(e.code)) {
                 if (!e.repeat) {
@@ -4436,7 +3745,6 @@
 
             updateGame(dt);
             drawGame();
-            drawMusicVisualizer();
 
             requestAnimationFrame(gameLoop);
         }
